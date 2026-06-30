@@ -386,7 +386,8 @@ function render(){
         extraNote=`<div class="chip c-grey done-chip note-only extra"><div class="chiprow"><span>Note</span><span class="tick note-ind">✎</span></div><div class="chipdetail"><div class="dl">${note}</div></div></div>`;
       return `<div class="${cls.join(' ')}" data-iso="${iso}" data-wi="${wi}"><div class="dhead"><span class="dname">${DNAMES[di]}</span><span class="dnum">${dispDate(iso)}</span></div><div class="chips">${chips}${extra}${extraNote}</div></div>`;
     }).join("");
-    const headInner=`<span class="wk-no">WEEK ${w.no}</span><span class="wk-range">${w.range}</span>${w.tag?`<span class="wk-tag">· ${w.tag}</span>`:""}<div class="wk-vol">${volBar(vol,w.total)}${actBlock(c.done,c.planned)}${longBlock(lng,w.long)}</div>`;
+    const noneWk=w.kind==="none";   // unplanned week: actual == target so bars read full
+    const headInner=`<span class="wk-no">WEEK ${w.no}</span><span class="wk-range">${w.range}</span>${w.tag?`<span class="wk-tag">· ${w.tag}</span>`:""}<div class="wk-vol">${volBar(vol,noneWk?vol:w.total)}${actBlock(c.done,c.planned)}${longBlock(lng,noneWk?lng:w.long)}</div>`;
     const html = past
       ? `<details class="week past"><summary class="wk-head">${headInner}</summary><div class="grid">${days}</div></details>`
       : `<div class="week"><div class="wk-head">${headInner}</div><div class="grid">${days}</div></div>`;
