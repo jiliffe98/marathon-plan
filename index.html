@@ -84,9 +84,17 @@
   .t-race{background:var(--coral);color:#fff}
   .t-other{background:#eef0f3;color:#5a6470}
 
+  /* status colours: completed run=green, missed run=red, future run=blue, strength/ride/rest=grey */
+  .c-green{background:#e4f3ea;color:#2f8a55}
+  .c-red{background:#fbe9e7;color:#c0392b}
+  .c-blue{background:var(--harbour-soft);color:var(--harbour)}
+  .c-grey{background:#eef0f3;color:#5a6470}
   /* completed / annotated chip = expandable; detail lives inside the same border */
-  .chip.done-chip{display:block;padding:0;cursor:pointer;box-shadow:inset 0 0 0 1px var(--good)}
+  .chip.done-chip{display:block;padding:0;cursor:pointer}
+  .chip.done-chip.c-green{box-shadow:inset 0 0 0 1px var(--good)}
+  .chip.done-chip.c-grey{box-shadow:inset 0 0 0 1px #c4ccd4}
   .chip.done-chip.note-only{box-shadow:inset 0 0 0 1px var(--warn)}
+  .chip.extra{cursor:pointer}
   .chiprow{display:flex;align-items:center;gap:6px;padding:3px 7px}
   .chip .tick{display:inline-flex;align-items:center;justify-content:center;margin-left:auto;width:16px;height:16px;flex:none;border-radius:50%;background:var(--good);color:#fff;font-size:10px;font-weight:800}
   .chip .tick svg{width:11px;height:11px}
@@ -300,6 +308,8 @@ function volBar(actual,target){
   return `<div class="vol-block"><div class="vol-lab"><span>Run km</span><span class="num">${fmt(actual)} / ${target} km${delta}</span></div><div class="bar"><div class="fill" style="width:${pct}%;background:${col}"></div></div></div>`;
 }
 const RUNCLASSES=["t-int","t-thr","t-easy","t-long","t-race"];
+function chipCategory(p){const tc=typeClass(p.a);if(tc==="t-ride")return"ride";if(tc==="t-str")return"strength";if(RUNCLASSES.includes(tc))return"run";return"other";}
+function actCategory(a){if(a.sport==="ride")return"ride";if(a.sport==="strength")return"strength";if(a.sport==="other")return"other";const tc=typeClass(a.atype||a.type||"");if(tc==="t-ride")return"ride";if(tc==="t-str")return"strength";return"run";}
 function weekCounts(wi,isos){
   let planned=0,done=0;
   isos.forEach(iso=>{
@@ -329,37 +339,51 @@ function render(){
       const planned=plannedFor(wi,iso), a=actualFor(iso);
       const note=USER.notes[iso];
       const hasActual=!!(a&&(a.done||typeof a.km==="number"||(a.note&&a.note.length)));
-      const expandable=hasActual||!!note;
-      // anchor the completion/notes to the best-matching planned chip
-      const RUN=RUNCLASSES;
+      const isPastDay=iso<ti;
+      const cat=hasActual?actCategory(a):null;
+      // match strictly within category (run↔run, ride↔ride, strength↔strength)
       let anchor=-1;
-      if(expandable){
-        if(hasActual){
-          const at=a.atype||a.type||"";
-          const isRide=a.sport==="ride"||typeClass(at)==="t-ride";
-          anchor=planned.findIndex(p=>typeClass(p.a)===typeClass(at));
-          if(anchor<0)anchor=isRide?planned.findIndex(p=>typeClass(p.a)==="t-ride")
-                                   :planned.findIndex(p=>RUN.includes(typeClass(p.a)));
-        }else{
-          anchor=planned.findIndex(p=>RUN.includes(typeClass(p.a)));
-        }
-        if(anchor<0)anchor=planned.findIndex(p=>typeClass(p.a)!=="t-rest");
-        if(anchor<0)anchor=0;
+      if(hasActual&&cat!=="other"){
+        anchor=planned.findIndex(p=>chipCategory(p)===cat&&typeClass(p.a)===typeClass(a.atype||a.type||""));
+        if(anchor<0)anchor=planned.findIndex(p=>chipCategory(p)===cat);
+      }
+      // a note with no completed activity hangs off the first run chip
+      let noteAnchor=-1;
+      if(!hasActual&&note){
+        noteAnchor=planned.findIndex(p=>chipCategory(p)==="run");
+        if(noteAnchor<0)noteAnchor=planned.findIndex(p=>chipCategory(p)!=="other");
       }
       const cls=["day"];
-      if(a&&a.done)cls.push("done");
       if(iso===ti)cls.push("today");
       if(planned.some(p=>p.race))cls.push("race");
-      const chips=planned.map((p,ai)=>{
-        const km=p.km!=null?`<span class="km">${p.km}k</span>`:"";
-        if(ai!==anchor)return `<div class="chip ${typeClass(p.a)}" draggable="true" data-loc="${iso}|${ai}"><span>${p.a}</span>${km}</div>`;
-        const ind=hasActual?`<span class="tick">${CHECK}</span>`:`<span class="tick note-ind">✎</span>`;
-        const tag=hasActual?(a.fromStrava?'<span class="src">Strava</span>':(a.done?'<span class="src manual">Logged</span>':"")):"";
-        const actLine=hasActual?`<div class="dl">${typeof a.km==="number"?`<span class="km">${fmt(a.km)} km</span> `:""}${a.atype||a.type||""}${tag}${a.note?`<div class="dn">${a.note}</div>`:""}</div>`:"";
+      const detailHTML=(completed)=>{
+        const tag=completed?(a.fromStrava?'<span class="src">Strava</span>':(a.done?'<span class="src manual">Logged</span>':"")):"";
+        const actLine=completed?`<div class="dl">${typeof a.km==="number"?`<span class="km">${fmt(a.km)} km</span> `:""}${a.atype||a.type||""}${tag}${a.note?`<div class="dn">${a.note}</div>`:""}</div>`:"";
         const noteLine=note?`<div class="dl"><b>Note</b> ${note}</div>`:"";
-        return `<div class="chip ${typeClass(p.a)} done-chip${hasActual?'':' note-only'}" draggable="true" data-loc="${iso}|${ai}"><div class="chiprow"><span>${p.a}</span>${km}${ind}</div><div class="chipdetail">${actLine}${noteLine}</div></div>`;
+        return actLine+noteLine;
+      };
+      const chips=planned.map((p,ai)=>{
+        const cat2=chipCategory(p);
+        const km=p.km!=null?`<span class="km">${p.km}k</span>`:"";
+        const isAnchor=(ai===anchor), isNote=(ai===noteAnchor);
+        let color="c-grey";
+        if(cat2==="run")color=isAnchor?"c-green":(isPastDay?"c-red":"c-blue");
+        if(!isAnchor&&!isNote)
+          return `<div class="chip ${color}" draggable="true" data-loc="${iso}|${ai}"><span>${p.a}</span>${km}</div>`;
+        const ind=isAnchor?`<span class="tick">${CHECK}</span>`:`<span class="tick note-ind">✎</span>`;
+        return `<div class="chip ${color} done-chip${isAnchor?'':' note-only'}" draggable="true" data-loc="${iso}|${ai}"><div class="chiprow"><span>${p.a}</span>${km}${ind}</div><div class="chipdetail">${detailHTML(isAnchor)}</div></div>`;
       }).join("");
-      return `<div class="${cls.join(' ')}" data-iso="${iso}" data-wi="${wi}"><div class="dhead"><span class="dname">${DNAMES[di]}</span><span class="dnum">${dispDate(iso)}</span></div><div class="chips">${chips}</div></div>`;
+      // completed activity with no matching planned slot: fixed chip, can't be dragged (Strava keeps its date)
+      let extra="";
+      if(hasActual&&anchor<0){
+        const ccolor=cat==="run"?"c-green":"c-grey";
+        extra=`<div class="chip ${ccolor} done-chip extra"><div class="chiprow"><span>${a.atype||a.type||"Done"}</span><span class="tick">${CHECK}</span></div><div class="chipdetail">${detailHTML(true)}</div></div>`;
+      }
+      // note on a day with no run chip and no activity
+      let extraNote="";
+      if(!hasActual&&note&&noteAnchor<0)
+        extraNote=`<div class="chip c-grey done-chip note-only extra"><div class="chiprow"><span>Note</span><span class="tick note-ind">✎</span></div><div class="chipdetail"><div class="dl">${note}</div></div></div>`;
+      return `<div class="${cls.join(' ')}" data-iso="${iso}" data-wi="${wi}"><div class="dhead"><span class="dname">${DNAMES[di]}</span><span class="dnum">${dispDate(iso)}</span></div><div class="chips">${chips}${extra}${extraNote}</div></div>`;
     }).join("");
     const headInner=`<span class="wk-no">WEEK ${w.no}</span><span class="wk-range">${w.range}</span>${w.tag?`<span class="wk-tag">· ${w.tag}</span>`:""}<div class="wk-vol">${volBar(vol,w.total)}${actBlock(c.done,c.planned)}${longBlock(lng,w.long)}</div>`;
     const html = past

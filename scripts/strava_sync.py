@@ -115,11 +115,31 @@ def main():
     for a in acts:
         date = a["start_date_local"][:10]
         km = round(a["distance"] / 1000.0, 1)
-        sport = a.get("sport_type") or a.get("type") or ""
-        if sport not in ("Run", "TrailRun", "VirtualRun"):
-            data[date] = {"km": km, "type": "Ride", "note": f"{a.get('name','Ride')} {km} km",
-                          "done": True, "sport": "ride"}
+        mins = round(a.get("moving_time", 0) / 60)
+        s = (a.get("sport_type") or a.get("type") or "").lower()
+        if any(k in s for k in ("run",)):
+            sport = "run"
+        elif any(k in s for k in ("ride", "cycl", "bike", "ebike", "velomobile")):
+            sport = "ride"
+        elif any(k in s for k in ("weight", "strength", "workout", "crossfit", "hiit")):
+            sport = "strength"
+        else:
+            sport = "other"
+
+        if sport == "ride":
+            data[date] = {"km": km, "type": "Ride", "note": f"{km} km ride", "done": True, "sport": "ride"}
+            print(f"  {date}  Ride       {km:>5} km")
             continue
+        if sport == "strength":
+            data[date] = {"km": None, "type": "Strength", "note": f"{mins} min", "done": True, "sport": "strength"}
+            print(f"  {date}  Strength   {mins:>4} min")
+            continue
+        if sport == "other":
+            data[date] = {"km": km, "type": a.get("sport_type") or "Activity", "note": f"{km} km",
+                          "done": True, "sport": "other"}
+            print(f"  {date}  Other      {km:>5} km")
+            continue
+
         try:
             laps = get(f"/activities/{a['id']}/laps", token)
         except Exception:
