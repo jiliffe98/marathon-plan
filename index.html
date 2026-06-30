@@ -84,19 +84,22 @@
   .t-race{background:var(--coral);color:#fff}
   .t-other{background:#eef0f3;color:#5a6470}
 
-  /* completion tick on the matching planned chip */
-  .chip.done-chip{box-shadow:inset 0 0 0 1px var(--good)}
-  .chip .tick{display:inline-flex;align-items:center;justify-content:center;margin-left:auto;width:16px;height:16px;flex:none;border-radius:50%;background:var(--good);color:#fff;cursor:pointer}
-  .chip.done-chip .km{margin-left:auto}
-  .chip.done-chip .km + .tick{margin-left:5px}
+  /* completed / annotated chip = expandable; detail lives inside the same border */
+  .chip.done-chip{display:block;padding:0;cursor:pointer;box-shadow:inset 0 0 0 1px var(--good)}
+  .chip.done-chip.note-only{box-shadow:inset 0 0 0 1px var(--warn)}
+  .chiprow{display:flex;align-items:center;gap:6px;padding:3px 7px}
+  .chip .tick{display:inline-flex;align-items:center;justify-content:center;margin-left:auto;width:16px;height:16px;flex:none;border-radius:50%;background:var(--good);color:#fff;font-size:10px;font-weight:800}
   .chip .tick svg{width:11px;height:11px}
-  .daydetail{display:none;margin-top:7px;font-size:11.5px;color:var(--good);font-weight:600;background:var(--ride-soft);border:1px solid #cfe3d6;border-radius:7px;padding:6px 8px;line-height:1.35}
-  .daydetail.show{display:block}
-  .daydetail .km{font-weight:800}
-  .daydetail .dn{font-weight:500;color:#3f6b52;margin-top:2px}
-  .daydetail .src{display:inline-block;margin-left:5px;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:#fc5200;border-radius:4px;padding:1px 4px;vertical-align:middle}
-  .daydetail .src.manual{background:var(--harbour)}
-  .note{margin-top:6px;font-size:11px;color:#8a6d2b;background:#fdf6e3;border:1px solid #f0e4bf;border-radius:6px;padding:4px 7px;line-height:1.3}
+  .chip .tick.note-ind{background:var(--warn)}
+  .chip .km ~ .tick{margin-left:5px}
+  .chipdetail{display:none;padding:6px 8px;border-top:1px solid rgba(0,0,0,.10);font-size:11px;line-height:1.4;font-weight:600;color:inherit;cursor:default}
+  .chipdetail.show{display:block}
+  .chipdetail .dl + .dl{margin-top:4px}
+  .chipdetail .km{font-weight:800}
+  .chipdetail .dn{font-weight:500;opacity:.85;margin-top:2px}
+  .chipdetail b{font-weight:800;margin-right:3px}
+  .chipdetail .src{display:inline-block;margin-left:5px;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:#fc5200;border-radius:4px;padding:1px 4px;vertical-align:middle}
+  .chipdetail .src.manual{background:var(--harbour)}
 
   .ov{position:fixed;inset:0;background:rgba(20,28,40,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
   .ov.show{display:flex}
@@ -323,29 +326,39 @@ function render(){
     const c=weekCounts(wi,isos);
     const days=isos.map((iso,di)=>{
       const planned=plannedFor(wi,iso), a=actualFor(iso);
-      const hasActual=!!(a&&(a.done||typeof a.km==="number"||a.note));
-      // tick the planned chip that best matches the actual session type
-      let matchIdx=-1;
-      if(hasActual){
-        const at=a.atype||a.type||"";
-        matchIdx=planned.findIndex(p=>typeClass(p.a)===typeClass(at));
-        if(matchIdx<0&&planned.length)matchIdx=0;
+      const note=USER.notes[iso];
+      const hasActual=!!(a&&(a.done||typeof a.km==="number"||(a.note&&a.note.length)));
+      const expandable=hasActual||!!note;
+      // anchor the completion/notes to the best-matching planned chip
+      const RUN=["t-int","t-thr","t-easy","t-long","t-race"];
+      let anchor=-1;
+      if(expandable){
+        if(hasActual){
+          const at=a.atype||a.type||"";
+          const isRide=a.sport==="ride"||typeClass(at)==="t-ride";
+          anchor=planned.findIndex(p=>typeClass(p.a)===typeClass(at));
+          if(anchor<0)anchor=isRide?planned.findIndex(p=>typeClass(p.a)==="t-ride")
+                                   :planned.findIndex(p=>RUN.includes(typeClass(p.a)));
+        }else{
+          anchor=planned.findIndex(p=>RUN.includes(typeClass(p.a)));
+        }
+        if(anchor<0)anchor=planned.findIndex(p=>typeClass(p.a)!=="t-rest");
+        if(anchor<0)anchor=0;
       }
       const cls=["day"];
       if(a&&a.done)cls.push("done");
       if(iso===ti)cls.push("today");
       if(planned.some(p=>p.race))cls.push("race");
       const chips=planned.map((p,ai)=>{
-        const tick=(ai===matchIdx)?`<span class="tick" data-detail="${iso}" title="Show session detail">${CHECK}</span>`:"";
-        return `<div class="chip ${typeClass(p.a)}${ai===matchIdx?' done-chip':''}" draggable="true" data-loc="${iso}|${ai}"><span>${p.a}</span>${p.km!=null?`<span class="km">${p.km}k</span>`:""}${tick}</div>`;
+        const km=p.km!=null?`<span class="km">${p.km}k</span>`:"";
+        if(ai!==anchor)return `<div class="chip ${typeClass(p.a)}" draggable="true" data-loc="${iso}|${ai}"><span>${p.a}</span>${km}</div>`;
+        const ind=hasActual?`<span class="tick">${CHECK}</span>`:`<span class="tick note-ind">✎</span>`;
+        const tag=hasActual?(a.fromStrava?'<span class="src">Strava</span>':(a.done?'<span class="src manual">Logged</span>':"")):"";
+        const actLine=hasActual?`<div class="dl">${typeof a.km==="number"?`<span class="km">${fmt(a.km)} km</span> `:""}${a.atype||a.type||""}${tag}${a.note?`<div class="dn">${a.note}</div>`:""}</div>`:"";
+        const noteLine=note?`<div class="dl"><b>Note</b> ${note}</div>`:"";
+        return `<div class="chip ${typeClass(p.a)} done-chip${hasActual?'':' note-only'}" draggable="true" data-loc="${iso}|${ai}"><div class="chiprow"><span>${p.a}</span>${km}${ind}</div><div class="chipdetail">${actLine}${noteLine}</div></div>`;
       }).join("");
-      let detail="";
-      if(hasActual){
-        const tag=a.fromStrava?'<span class="src">Strava</span>':(a.done?'<span class="src manual">Logged</span>':"");
-        detail=`<div class="daydetail" id="dd-${iso}"><div class="txt">${typeof a.km==="number"?`<span class="km">${fmt(a.km)} km</span> `:""}${a.atype||a.type||""}${tag}${a.note?`<div class="dn">${a.note}</div>`:""}</div></div>`;
-      }
-      const note=USER.notes[iso]?`<div class="note">${USER.notes[iso]}</div>`:"";
-      return `<div class="${cls.join(' ')}" data-iso="${iso}" data-wi="${wi}"><div class="dhead"><span class="dname">${DNAMES[di]}</span><span class="dnum">${dispDate(iso)}</span></div><div class="chips">${chips}</div>${detail}${note}</div>`;
+      return `<div class="${cls.join(' ')}" data-iso="${iso}" data-wi="${wi}"><div class="dhead"><span class="dname">${DNAMES[di]}</span><span class="dnum">${dispDate(iso)}</span></div><div class="chips">${chips}</div></div>`;
     }).join("");
     const headInner=`<span class="wk-no">WEEK ${w.no}</span><span class="wk-range">${w.range}</span>${w.tag?`<span class="wk-tag">· ${w.tag}</span>`:""}<div class="wk-vol">${volBar(vol,w.total)}${actBlock(c.done,c.planned)}${longBlock(lng,w.long)}</div>`;
     const html = past
@@ -384,8 +397,8 @@ host.addEventListener("drop",e=>{const d=e.target.closest(".day");if(!d)return;e
 let editing=null,workPlanned=null;
 const ov=$("#ov");
 host.addEventListener("click",e=>{
-  const t=e.target.closest(".tick");
-  if(t){e.stopPropagation();const dd=document.getElementById("dd-"+t.dataset.detail);if(dd)dd.classList.toggle("show");return;}
+  const dc=e.target.closest(".chip.done-chip");
+  if(dc){e.stopPropagation();const dd=dc.querySelector(".chipdetail");if(dd)dd.classList.toggle("show");return;}
   if(e.target.closest(".chip"))return;
   const d=e.target.closest(".day");if(d)openEditor(+d.dataset.wi,d.dataset.iso);
 });
