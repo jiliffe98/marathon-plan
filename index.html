@@ -362,7 +362,9 @@ function render(){
         const noteLine=note?`<div class="dl"><b>Note</b> ${note}</div>`:"";
         return actLine+noteLine;
       };
-      const chips=planned.map((p,ai)=>{
+      const chips=planned.map((p,ai)=>({p,ai}))
+        .sort((x,y)=>(chipCategory(x.p)==="run"?0:1)-(chipCategory(y.p)==="run"?0:1))
+        .map(({p,ai})=>{
         const cat2=chipCategory(p);
         const km=p.km!=null?`<span class="km">${p.km}k</span>`:"";
         const isAnchor=(ai===anchor), isNote=(ai===noteAnchor);
