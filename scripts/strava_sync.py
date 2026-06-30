@@ -148,8 +148,10 @@ def main():
         data[date] = {"km": km, "type": label, "note": note, "done": True, "sport": "run"}
         print(f"  {date}  {label:10} {km:>5} km  ({note})")
 
+    data["_synced_at"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     OUT.write_text(json.dumps(dict(sorted(data.items())), indent=2) + "\n")
-    print(f"Wrote {OUT} ({len(data)} days)")
+    days = sum(1 for k in data if k[:1].isdigit())
+    print(f"Wrote {OUT} ({days} days, synced {data['_synced_at']})")
 
 
 if __name__ == "__main__":

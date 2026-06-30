@@ -174,10 +174,13 @@
     <div class="stat">Sessions done <b id="s-sessions">0</b></div>
     <div class="stat">Km run so far <b id="s-km">0</b></div>
     <div class="stat">Longest run <b id="s-long">0</b></div>
+    <div class="stat">Last Strava sync <b id="s-sync">—</b></div>
     <div class="spacer"></div>
     <span class="syncpill" id="syncpill">…</span>
+    <button class="btn" id="resync">↻ Resync Strava</button>
     <button class="btn" id="reset">Reset edits</button>
   </div>
+  <div class="ai-status" id="sync-msg"></div>
   <p class="hint">Volume counts logged runs only (rides excluded). Strava-imported sessions show an orange tag and can be overridden by tapping the day.</p>
 
   <div class="aibar" id="aibar">
@@ -643,6 +646,48 @@ if(AI_ON){
   wireDictation($("#ai-followup"),$("#ai-mic2"),$("#ai-status2"));
 }
 
+/* ---------- Strava resync ---------- */
+function relTime(iso){
+  if(!iso)return "—";
+  const then=new Date(iso).getTime(); if(isNaN(then))return "—";
+  let s=Math.floor((Date.now()-then)/1000); if(s<0)s=0;
+  if(s<90)return "just now";
+  const m=Math.floor(s/60); if(m<90)return m+" min ago";
+  const h=Math.floor(m/60); if(h<36)return h+"h ago";
+  return Math.floor(h/24)+"d ago";
+}
+function setLastSync(){const el=$("#s-sync");if(el)el.textContent=relTime(ACTIVITIES&&ACTIVITIES._synced_at);}
+async function reloadActivities(){try{const r=await fetch("data/activities.json?ts="+Date.now());if(r.ok)ACTIVITIES=await r.json();}catch(e){}}
+const reBtn=$("#resync"), syncMsg=$("#sync-msg");
+reBtn.addEventListener("click",async()=>{
+  reBtn.disabled=true; const label=reBtn.textContent; reBtn.textContent="Syncing…";
+  setS(syncMsg,"Asking Strava for your latest activities…");
+  const prev=(ACTIVITIES&&ACTIVITIES._synced_at)||"";
+  let triggered=false, err="";
+  if(SB){
+    try{
+      const r=await fetch(CFG.SUPABASE_URL+"/functions/v1/resync",{method:"POST",headers:{apikey:CFG.SUPABASE_ANON_KEY,Authorization:"Bearer "+CFG.SUPABASE_ANON_KEY}});
+      const d=await r.json().catch(()=>({}));
+      if(r.ok&&d.ok)triggered=true; else err=d.error||("HTTP "+r.status);
+    }catch(e){err=e.message;}
+  }else err="cloud sync not configured";
+  if(triggered){
+    let updated=false;
+    for(let i=0;i<22;i++){
+      reBtn.textContent="Syncing… "+((i+1)*8)+"s";
+      await new Promise(res=>setTimeout(res,8000));
+      await reloadActivities();
+      if(((ACTIVITIES&&ACTIVITIES._synced_at)||"")!==prev){updated=true;break;}
+    }
+    render(); setLastSync();
+    setS(syncMsg, updated?"Strava sync complete.":"Sync started — it'll refresh within a minute; you can keep using the app.");
+  }else{
+    await reloadActivities(); render(); setLastSync();
+    setS(syncMsg,"Refreshed the latest data, but couldn't start a fresh Strava pull"+(err?" ("+err+")":"")+".",true);
+  }
+  reBtn.textContent=label; reBtn.disabled=false;
+});
+
 /* ---------- boot ---------- */
 async function boot(){
   const pill=$("#syncpill");
@@ -651,7 +696,7 @@ async function boot(){
   if(AI_ON)$("#aibar").classList.add("on");
   try{const r=await fetch("data/activities.json?ts="+Date.now());if(r.ok)ACTIVITIES=await r.json();}catch(e){console.warn("no activities.json yet",e);}
   USER=await loadUser(); USER.planned=USER.planned||{};USER.actuals=USER.actuals||{};USER.notes=USER.notes||{};
-  render();
+  render(); setLastSync();
 }
 boot();
 </script>
