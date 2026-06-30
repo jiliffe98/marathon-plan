@@ -320,7 +320,7 @@ function weekCounts(wi,isos){
 }
 function actBlock(done,planned){
   const pct=planned?Math.min(100,Math.round(done/planned*100)):0, met=planned&&done>=planned;
-  return `<div class="vol-block"><div class="vol-lab"><span>Activities</span><span class="num">${done} / ${planned}</span></div><div class="bar"><div class="fill" style="width:${pct}%;background:${met?'var(--good)':'var(--harbour)'}"></div></div></div>`;
+  return `<div class="vol-block"><div class="vol-lab"><span>Runs</span><span class="num">${done} / ${planned}</span></div><div class="bar"><div class="fill" style="width:${pct}%;background:${met?'var(--good)':'var(--harbour)'}"></div></div></div>`;
 }
 function longBlock(actual,target){
   if(!target)return `<div class="vol-block"><div class="vol-lab"><span>Long run</span><span class="num">${actual?fmt(actual)+' km':'—'}</span></div><div class="bar"></div></div>`;
