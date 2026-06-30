@@ -1,0 +1,396 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Sydney Marathon Training Plan</title>
+<style>
+  :root{
+    --ground:#f7f8fa;--card:#fff;--ink:#19222e;--muted:#64727f;--line:#e3e8ee;
+    --harbour:#15688a;--harbour-soft:#e7f1f6;
+    --coral:#d9532e;--coral-soft:#fbeae3;
+    --rest:#8a93a0;--rest-soft:#eef0f3;
+    --ride:#3f7a5c;--ride-soft:#e8f2ec;
+    --str:#6b5ca8;--str-soft:#ece9f6;
+    --easy:#3d7fa6;--easy-soft:#e8f1f7;
+    --thr:#0e4d68;--thr-soft:#e0edf2;
+    --good:#2f8a55;--warn:#c9842b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink);background:var(--ground);line-height:1.45}
+  .wrap{padding:clamp(14px,3.5vw,46px)}
+  .inner{max-width:1180px;margin:0 auto}
+  .eyebrow{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--harbour);font-weight:700;margin:0 0 8px}
+  h1{font-size:clamp(24px,4.5vw,42px);line-height:1.04;margin:0;font-weight:800;letter-spacing:-.02em}
+  .sub{color:var(--muted);margin:10px 0 0;font-size:14.5px;max-width:64ch}
+
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:18px 0 4px}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 14px;font-size:13px}
+  .stat b{font-size:16px;font-variant-numeric:tabular-nums}
+  .spacer{flex:1}
+  .syncpill{font-size:11.5px;font-weight:700;padding:6px 11px;border-radius:20px;border:1px solid var(--line);color:var(--muted)}
+  .syncpill.ok{color:var(--good);border-color:#bfe0cc;background:var(--ride-soft)}
+  .syncpill.local{color:var(--warn);border-color:#eccfa0;background:#fbf3e3}
+  button.btn{font:inherit;font-size:12.5px;font-weight:600;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:9px;padding:8px 13px;cursor:pointer}
+  button.btn:hover{border-color:var(--harbour);color:var(--harbour)}
+  .hint{font-size:12px;color:var(--muted);margin:10px 0 0}
+
+  .weeks{display:flex;flex-direction:column;gap:18px;margin-top:20px}
+  .week{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  .wk-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:13px 18px;border-bottom:1px solid var(--line);background:linear-gradient(0deg,#fff,#fbfcfd)}
+  .wk-no{font-size:12px;font-weight:800;color:var(--harbour);letter-spacing:.1em}
+  .wk-range{font-size:16px;font-weight:700}
+  .wk-tag{font-size:12px;color:var(--muted)}
+  .wk-vol{margin-left:auto;display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+  .vol-block{min-width:150px}
+  .vol-lab{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;display:flex;justify-content:space-between;gap:10px}
+  .vol-lab .num{color:var(--ink);font-variant-numeric:tabular-nums}
+  .bar{height:7px;border-radius:5px;background:var(--line);margin-top:5px;overflow:hidden}
+  .fill{height:100%;border-radius:5px}
+  .delta{font-size:10.5px;font-weight:700}
+
+  .grid{display:grid;grid-template-columns:repeat(7,1fr)}
+  .day{padding:10px 10px 12px;border-right:1px solid var(--line);border-top:1px solid var(--line);min-height:132px;cursor:pointer;position:relative}
+  .day:nth-child(7n){border-right:none}
+  .day:nth-child(-n+7){border-top:none}
+  .day:hover{background:#fcfdfe}
+  .day.dragover{background:var(--harbour-soft);box-shadow:inset 0 0 0 2px var(--harbour)}
+  .day.done{box-shadow:inset 3px 0 0 var(--good)}
+  .day.today{outline:2px solid var(--harbour);outline-offset:-2px}
+  .day.race{background:linear-gradient(135deg,#fff,var(--coral-soft))}
+  .dhead{display:flex;justify-content:space-between;align-items:baseline}
+  .dname{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .dnum{font-size:11px;color:var(--muted);font-weight:600}
+  .chips{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+  .chip{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:3px 7px;border-radius:7px;cursor:grab;border:1px solid transparent;touch-action:none}
+  .chip:active{cursor:grabbing}
+  .chip .km{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:800;font-size:11px;opacity:.9}
+  .t-rest{background:var(--rest-soft);color:#5a6470}
+  .t-int{background:var(--harbour-soft);color:var(--harbour)}
+  .t-str{background:var(--str-soft);color:var(--str)}
+  .t-ride{background:var(--ride-soft);color:var(--ride)}
+  .t-easy{background:var(--easy-soft);color:var(--easy)}
+  .t-thr{background:var(--thr-soft);color:var(--thr)}
+  .t-long{background:var(--coral-soft);color:var(--coral)}
+  .t-race{background:var(--coral);color:#fff}
+  .t-other{background:#eef0f3;color:#5a6470}
+
+  .actual{margin-top:8px;border-top:1px dashed var(--line);padding-top:7px;display:flex;gap:6px;align-items:flex-start;font-size:11.5px;color:var(--good);font-weight:700}
+  .actual svg{width:13px;height:13px;flex:none;margin-top:1px}
+  .actual .txt{font-weight:600;line-height:1.3}
+  .actual .km{font-weight:800}
+  .actual .src{display:inline-block;margin-left:4px;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:#fc5200;border-radius:4px;padding:1px 4px;vertical-align:middle}
+  .note{margin-top:6px;font-size:11px;color:#8a6d2b;background:#fdf6e3;border:1px solid #f0e4bf;border-radius:6px;padding:4px 7px;line-height:1.3}
+
+  .ov{position:fixed;inset:0;background:rgba(20,28,40,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
+  .ov.show{display:flex}
+  .modal{background:#fff;border-radius:14px;width:min(440px,100%);max-height:90vh;overflow:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .m-head{padding:16px 18px;border-bottom:1px solid var(--line)}
+  .m-head h3{margin:0;font-size:17px}
+  .m-head p{margin:3px 0 0;font-size:12.5px;color:var(--muted)}
+  .m-body{padding:16px 18px;display:flex;flex-direction:column;gap:16px}
+  .fld label.cap{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:var(--muted);margin-bottom:6px}
+  .fld input[type=text],.fld input[type=number],.fld textarea{width:100%;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:8px 10px;color:var(--ink)}
+  .fld textarea{resize:vertical;min-height:58px}
+  .row{display:flex;gap:10px}.row>*{flex:1}
+  .togg{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600;cursor:pointer}
+  .togg input{width:18px;height:18px;accent-color:var(--good)}
+  .plist{display:flex;flex-direction:column;gap:6px}
+  .prow{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;padding:5px 9px;border-radius:7px}
+  .prow .km{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:800;font-size:12px}
+  .prow .x{cursor:pointer;color:var(--muted);font-weight:800;padding:0 2px}
+  .prow .x:hover{color:var(--coral)}
+  .addrow{display:flex;gap:6px;margin-top:4px}
+  .addrow input[type=text]{flex:2}.addrow input[type=number]{flex:1;min-width:0;width:100%;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:8px;padding:8px 10px}
+  .m-foot{padding:14px 18px;border-top:1px solid var(--line);display:flex;gap:10px;justify-content:flex-end}
+  .m-foot .grow{margin-right:auto}
+  button.primary{background:var(--harbour);color:#fff;border-color:var(--harbour)}
+  button.primary:hover{filter:brightness(1.06);color:#fff}
+  button.ghost{color:var(--coral)}button.ghost:hover{border-color:var(--coral);color:var(--coral)}
+  .movebar{display:flex;gap:5px;flex-wrap:wrap;margin-top:4px}
+  .movebar button{font-size:11px;padding:4px 8px}
+
+  @media (max-width:820px){
+    .grid{grid-template-columns:1fr 1fr}
+    .day{min-height:auto}
+    .day:nth-child(7n){border-right:1px solid var(--line)}
+    .day:nth-child(2n){border-right:none}
+    .day:nth-child(-n+7){border-top:1px solid var(--line)}
+    .day:nth-child(-n+2){border-top:none}
+    .wk-vol{margin-left:0;width:100%}
+  }
+</style>
+</head>
+<body>
+<div class="wrap"><div class="inner">
+  <p class="eyebrow">Race day · Sun 30 Aug 2026</p>
+  <h1>Sydney Marathon Training Plan</h1>
+  <p class="sub">Tap any day to log a session or note. Drag a session onto another day to rearrange. Strava activity is pulled in automatically each day; your edits sync across devices.</p>
+
+  <div class="toolbar">
+    <div class="stat">Sessions done <b id="s-sessions">0</b></div>
+    <div class="stat">Km run so far <b id="s-km">0</b></div>
+    <div class="stat">Longest run <b id="s-long">0</b></div>
+    <div class="spacer"></div>
+    <span class="syncpill" id="syncpill">…</span>
+    <button class="btn" id="reset">Reset edits</button>
+  </div>
+  <p class="hint">Volume counts logged runs only (rides excluded). Strava-imported sessions show an orange tag and can be overridden by tapping the day.</p>
+
+  <div class="weeks" id="weeks"></div>
+</div></div>
+
+<div class="ov" id="ov">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="m-head"><h3 id="m-title">Day</h3><p id="m-date"></p></div>
+    <div class="m-body">
+      <div class="fld">
+        <label class="cap">Planned</label>
+        <div class="plist" id="m-planned"></div>
+        <div class="addrow">
+          <input type="text" id="m-addname" placeholder="Add session (e.g. Easy)">
+          <input type="number" id="m-addkm" placeholder="km" step="0.1" min="0">
+          <button class="btn" id="m-add">Add</button>
+        </div>
+        <div class="movebar" id="m-move"></div>
+      </div>
+      <div class="fld">
+        <label class="cap">What I actually did</label>
+        <label class="togg"><input type="checkbox" id="m-done"> Mark this day complete</label>
+        <div class="row" style="margin-top:10px">
+          <div><input type="number" id="m-km" placeholder="Distance (km)" step="0.1" min="0"></div>
+          <div><input type="text" id="m-atype" placeholder="Type (e.g. Intervals)"></div>
+        </div>
+      </div>
+      <div class="fld">
+        <label class="cap">Note</label>
+        <textarea id="m-note" placeholder="How it felt, route, anything…"></textarea>
+      </div>
+    </div>
+    <div class="m-foot">
+      <button class="btn ghost grow" id="m-clear">Clear log</button>
+      <button class="btn" id="m-cancel">Cancel</button>
+      <button class="btn primary" id="m-save">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script>
+/* ============================================================
+   Sydney Marathon Training Plan — static app
+   Data sources:
+     1. Plan structure        — built in JS below (CFG)
+     2. Auto actuals          — data/activities.json (written daily by Strava sync)
+     3. Your edits (synced)   — Supabase if config.js is filled in, else localStorage
+   ============================================================ */
+const YEAR=2026, MNUM={Jun:6,Jul:7,Aug:8}, MONTHS={Jun:30,Jul:31,Aug:31};
+const DNAMES=["Mon","Tue","Wed","Thu","Fri","Sat","Sun"];
+const CFG=window.CONFIG||{};
+const SB = CFG.SUPABASE_URL && CFG.SUPABASE_ANON_KEY;
+const STATE_ID = CFG.STATE_ID || "default";
+
+function typeClass(a){const s=(a||"").toLowerCase();
+  if(/marathon|race/.test(s))return"t-race";if(/rest/.test(s))return"t-rest";
+  if(/interval|speed/.test(s))return"t-int";if(/strength/.test(s))return"t-str";
+  if(/ride|bike|cycl/.test(s))return"t-ride";if(/threshold|tempo/.test(s))return"t-thr";
+  if(/long/.test(s))return"t-long";if(/easy|hill|shake/.test(s))return"t-easy";return"t-other";}
+function pad(n){return String(n).padStart(2,"0");}
+function isoSeq(start){let[d,m]=start;const o=[];for(let i=0;i<7;i++){o.push(`${YEAR}-${pad(MNUM[m])}-${pad(d)}`);d++;if(d>MONTHS[m]){d=1;m=(m==="Jun"?"Jul":"Aug");}}return o;}
+function dispDate(iso){const[,mm,dd]=iso.split("-");const nm=Object.keys(MNUM).find(k=>MNUM[k]==+mm);return +dd+" "+nm;}
+const fmt=n=>Math.round(n*10)/10;
+
+const PLAN=[
+  {no:1,range:"15 – 21 June",tag:"Recovery — play by ear",start:[15,"Jun"],long:null,total:null,kind:"recovery"},
+  {no:2,range:"22 – 28 June",start:[22,"Jun"],long:24,total:50,t:{tue:6,wed:6,thu:8,fri:6,sun:24}},
+  {no:3,range:"29 June – 5 July",start:[29,"Jun"],long:27,total:60,t:{tue:6,wed:8,thu:10,fri:9,sun:27}},
+  {no:4,range:"6 – 12 July",tag:"Peak block",start:[6,"Jul"],long:30,total:70,t:{tue:6,wed:8,thu:14,fri:12,sun:30}},
+  {no:5,range:"13 – 19 July",tag:"Down week",start:[13,"Jul"],long:20,total:50,t:{tue:6,wed:6,thu:10,fri:8,sun:20}},
+  {no:6,range:"20 – 26 July",start:[20,"Jul"],long:33,total:73,t:{tue:6,wed:8,thu:14,fri:12,sun:33}},
+  {no:7,range:"27 July – 2 Aug",tag:"Biggest week",start:[27,"Jul"],long:36,total:80,t:{tue:8,wed:10,thu:14,fri:12,sun:36}},
+  {no:8,range:"3 – 9 Aug",tag:"Down week",start:[3,"Aug"],long:20,total:50,t:{tue:6,wed:8,thu:8,fri:8,sun:20}},
+  {no:9,range:"10 – 16 Aug",start:[10,"Aug"],long:25,total:60,t:{tue:6,wed:10,thu:10,fri:9,sun:25}},
+  {no:10,range:"17 – 23 Aug",tag:"Taper begins",start:[17,"Aug"],long:15,total:40,t:{tue:6,wed:5,thu:9,fri:5,sun:15},noSatRide:true},
+  {no:11,range:"24 – 30 Aug",tag:"Race week",start:[24,"Aug"],long:42.2,total:null,kind:"race"},
+];
+function stdPlanned(t){return[
+  [{a:"Rest"}],[{a:"Intervals",km:t.tue},{a:"Strength"}],[{a:"Ride"},{a:"Easy/hills",km:t.wed}],
+  [{a:"Threshold",km:t.thu},{a:"Strength"}],[{a:"Easy/hills",km:t.fri}],[{a:"Ride"}],[{a:"Long run",km:t.sun}]];}
+function defaultPlanned(c){
+  if(c.kind==="recovery")return[[{a:"Rest"}],[{a:"Easy/hills"}],[{a:"Ride"},{a:"Easy/hills"}],[{a:"Easy/hills"}],[{a:"Easy/hills"}],[{a:"Ride"}],[{a:"Long run"}]];
+  if(c.kind==="race")return[[{a:"Rest"}],[{a:"Intervals (short)"},{a:"Strength"}],[{a:"Easy/hills"}],[{a:"Threshold (short)"},{a:"Strength"}],[{a:"Easy/hills"}],[{a:"Shakeout"}],[{a:"Sydney Marathon",km:42.2,race:true}]];
+  const p=stdPlanned(c.t);if(c.noSatRide)p[5]=[{a:"Rest"}];return p;
+}
+
+let ACTIVITIES={};     // from data/activities.json (auto, read-only)
+let USER={planned:{},actuals:{},notes:{}};  // user edits (synced)
+
+/* ---------- storage layer (Supabase or localStorage) ---------- */
+async function loadUser(){
+  if(SB){
+    try{
+      const r=await fetch(`${CFG.SUPABASE_URL}/rest/v1/training_state?id=eq.${encodeURIComponent(STATE_ID)}&select=data`,
+        {headers:{apikey:CFG.SUPABASE_ANON_KEY,Authorization:"Bearer "+CFG.SUPABASE_ANON_KEY}});
+      const rows=await r.json();
+      if(rows&&rows[0]&&rows[0].data)return rows[0].data;
+    }catch(e){console.warn("Supabase load failed, using local",e);}
+  }
+  try{const s=localStorage.getItem("smtp_user");if(s)return JSON.parse(s);}catch(e){}
+  return {planned:{},actuals:{},notes:{}};
+}
+let saveTimer=null;
+function queueSave(){clearTimeout(saveTimer);saveTimer=setTimeout(saveUser,600);}
+async function saveUser(){
+  try{localStorage.setItem("smtp_user",JSON.stringify(USER));}catch(e){}
+  if(SB){
+    try{
+      await fetch(`${CFG.SUPABASE_URL}/rest/v1/training_state`,{
+        method:"POST",
+        headers:{apikey:CFG.SUPABASE_ANON_KEY,Authorization:"Bearer "+CFG.SUPABASE_ANON_KEY,
+          "Content-Type":"application/json",Prefer:"resolution=merge-duplicates"},
+        body:JSON.stringify([{id:STATE_ID,data:USER}])});
+    }catch(e){console.warn("Supabase save failed",e);}
+  }
+}
+
+/* ---------- merge helpers ---------- */
+function plannedFor(wi,iso){return USER.planned[iso] || defaultPlanned(PLAN[wi]);}
+function actualFor(iso){
+  const auto=ACTIVITIES[iso]; const u=USER.actuals[iso];
+  if(!auto&&!u)return null;
+  const m=Object.assign({},auto||{},u||{});
+  m.fromStrava = !!auto && !u;          // purely auto = show Strava tag
+  return m;
+}
+
+/* ---------- render ---------- */
+const $=s=>document.querySelector(s);
+const host=$("#weeks");
+const CHECK='<svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.2 3.2L13 5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+function todayISO(){const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
+function weekVol(isos){let v=0;isos.forEach(iso=>{const a=actualFor(iso);if(a&&a.sport!=="ride"&&typeof a.km==="number")v+=a.km;});return v;}
+function weekLong(isos){let m=0;isos.forEach(iso=>{const a=actualFor(iso);if(a&&a.sport!=="ride"&&typeof a.km==="number")m=Math.max(m,a.km);});return m;}
+
+function volBar(actual,target){
+  if(!target)return `<div class="vol-block"><div class="vol-lab"><span>Total</span><span class="num">${fmt(actual)} km</span></div><div class="bar"></div></div>`;
+  const pct=Math.min(100,Math.round(actual/target*100)),met=actual>=target-0.001;
+  const col=met?"var(--good)":(pct>=80?"var(--harbour)":"var(--warn)");
+  const delta=actual>0?`<span class="delta" style="color:${met?'var(--good)':'var(--warn)'}"> ${actual>=target?'+':''}${fmt(actual-target)}</span>`:"";
+  return `<div class="vol-block"><div class="vol-lab"><span>Total</span><span class="num">${fmt(actual)} / ${target} km${delta}</span></div><div class="bar"><div class="fill" style="width:${pct}%;background:${col}"></div></div></div>`;
+}
+function longBlock(actual,target){
+  if(!target)return `<div class="vol-block"><div class="vol-lab"><span>Long run</span><span class="num">${actual?fmt(actual)+' km':'—'}</span></div><div class="bar"></div></div>`;
+  const pct=Math.min(100,Math.round(actual/target*100)),met=actual>=target-0.001;
+  return `<div class="vol-block"><div class="vol-lab"><span>Long run</span><span class="num">${actual?fmt(actual):'0'} / ${target} km</span></div><div class="bar"><div class="fill" style="width:${pct}%;background:${met?'var(--good)':'var(--coral)'}"></div></div></div>`;
+}
+
+function render(){
+  const ti=todayISO();
+  host.innerHTML=PLAN.map((w,wi)=>{
+    const isos=isoSeq(w.start);
+    const vol=weekVol(isos),lng=weekLong(isos);
+    const days=isos.map((iso,di)=>{
+      const planned=plannedFor(wi,iso), a=actualFor(iso);
+      const cls=["day"];
+      if(a&&a.done)cls.push("done");
+      if(iso===ti)cls.push("today");
+      if(planned.some(p=>p.race))cls.push("race");
+      const chips=planned.map((p,ai)=>`<div class="chip ${typeClass(p.a)}" draggable="true" data-loc="${iso}|${ai}"><span>${p.a}</span>${p.km!=null?`<span class="km">${p.km}k</span>`:""}</div>`).join("");
+      let actHTML="";
+      if(a&&(a.done||typeof a.km==="number"||a.note)){
+        const tag=a.fromStrava?'<span class="src">Strava</span>':"";
+        actHTML=`<div class="actual">${CHECK}<div class="txt">${typeof a.km==="number"?`<span class="km">${fmt(a.km)} km</span> `:""}${a.atype||a.type||""}${tag}${a.note?`<div style="font-weight:500;color:#3f6b52">${a.note}</div>`:""}</div></div>`;
+      }
+      const note=USER.notes[iso]?`<div class="note">${USER.notes[iso]}</div>`:"";
+      return `<div class="${cls.join(' ')}" data-iso="${iso}" data-wi="${wi}"><div class="dhead"><span class="dname">${DNAMES[di]}</span><span class="dnum">${dispDate(iso)}</span></div><div class="chips">${chips}</div>${actHTML}${note}</div>`;
+    }).join("");
+    return `<div class="week"><div class="wk-head"><span class="wk-no">WEEK ${w.no}</span><span class="wk-range">${w.range}</span>${w.tag?`<span class="wk-tag">· ${w.tag}</span>`:""}<div class="wk-vol">${longBlock(lng,w.long)}${volBar(vol,w.total)}</div></div><div class="grid">${days}</div></div>`;
+  }).join("");
+  let sessions=0,km=0,longest=0;
+  PLAN.forEach(w=>isoSeq(w.start).forEach(iso=>{const a=actualFor(iso);if(!a)return;if(a.done)sessions++;if(a.sport!=="ride"&&typeof a.km==="number"){km+=a.km;longest=Math.max(longest,a.km);}}));
+  $("#s-sessions").textContent=sessions;$("#s-km").textContent=fmt(km)+" km";$("#s-long").textContent=fmt(longest)+" km";
+}
+
+/* ---------- drag & drop rearrange ---------- */
+host.addEventListener("dragstart",e=>{const c=e.target.closest(".chip");if(!c)return;e.dataTransfer.setData("text/plain",c.dataset.loc);e.dataTransfer.effectAllowed="move";});
+host.addEventListener("dragover",e=>{const d=e.target.closest(".day");if(d){e.preventDefault();d.classList.add("dragover");}});
+host.addEventListener("dragleave",e=>{const d=e.target.closest(".day");if(d)d.classList.remove("dragover");});
+host.addEventListener("drop",e=>{const d=e.target.closest(".day");if(!d)return;e.preventDefault();d.classList.remove("dragover");
+  const src=e.dataTransfer.getData("text/plain");if(!src)return;
+  const[siso,sai]=src.split("|"); const tiso=d.dataset.iso; if(siso===tiso)return;
+  const swi=+document.querySelector(`[data-iso="${siso}"]`).dataset.wi, twi=+d.dataset.wi;
+  const sArr=(USER.planned[siso]||defaultPlanned(PLAN[swi]).map(x=>x)).slice();
+  const tArr=(USER.planned[tiso]||defaultPlanned(PLAN[twi]).map(x=>x)).slice();
+  const item=sArr.splice(+sai,1)[0]; if(!item)return; tArr.push(item);
+  USER.planned[siso]=sArr; USER.planned[tiso]=tArr; queueSave(); render();
+});
+
+/* ---------- editor ---------- */
+let editing=null,workPlanned=null;
+const ov=$("#ov");
+host.addEventListener("click",e=>{if(e.target.closest(".chip"))return;const d=e.target.closest(".day");if(d)openEditor(+d.dataset.wi,d.dataset.iso);});
+function openEditor(wi,iso){
+  editing={wi,iso};
+  const w=PLAN[wi],a=actualFor(iso)||{};
+  workPlanned=JSON.parse(JSON.stringify(plannedFor(wi,iso)));
+  const di=isoSeq(w.start).indexOf(iso);
+  $("#m-title").textContent=DNAMES[di]+" — Week "+w.no;
+  $("#m-date").textContent=dispDate(iso)+(w.tag?" · "+w.tag:"");
+  $("#m-done").checked=!!a.done;
+  $("#m-km").value=(typeof a.km==="number")?a.km:"";
+  $("#m-atype").value=a.atype||a.type||"";
+  $("#m-note").value=USER.notes[iso]||"";
+  renderPlanned();renderMove(wi,iso);ov.classList.add("show");
+}
+function renderPlanned(){
+  $("#m-planned").innerHTML=workPlanned.map((p,i)=>`<div class="prow ${typeClass(p.a)}"><span>${p.a}</span>${p.km!=null?`<span class="km">${p.km} km</span>`:""}<span class="x" data-i="${i}">✕</span></div>`).join("")||`<div style="font-size:12px;color:var(--muted)">No sessions — add one below.</div>`;
+}
+function renderMove(wi,iso){
+  // quick move buttons for touch users
+  const isos=isoSeq(PLAN[wi].start), di=isos.indexOf(iso);
+  let html="";
+  if(workPlanned.length){html='<span style="font-size:11px;color:var(--muted);align-self:center">Move first session to:</span>';
+    DNAMES.forEach((n,j)=>{if(j!==di)html+=`<button class="btn" data-mv="${isos[j]}">${n}</button>`;});}
+  $("#m-move").innerHTML=html;
+}
+$("#m-move").addEventListener("click",e=>{const b=e.target.closest("[data-mv]");if(!b||!workPlanned.length)return;
+  const tiso=b.dataset.mv, twi=+document.querySelector(`[data-iso="${tiso}"]`).dataset.wi;
+  const item=workPlanned.shift();
+  const tArr=(USER.planned[tiso]||defaultPlanned(PLAN[twi])).slice(); tArr.push(item); USER.planned[tiso]=tArr;
+  renderPlanned();renderMove(editing.wi,editing.iso);
+});
+$("#m-planned").addEventListener("click",e=>{const x=e.target.closest(".x");if(!x)return;workPlanned.splice(+x.dataset.i,1);renderPlanned();renderMove(editing.wi,editing.iso);});
+$("#m-add").addEventListener("click",()=>{const n=$("#m-addname").value.trim();if(!n)return;const k=parseFloat($("#m-addkm").value);const o={a:n};if(!isNaN(k))o.km=k;workPlanned.push(o);$("#m-addname").value="";$("#m-addkm").value="";renderPlanned();renderMove(editing.wi,editing.iso);});
+$("#m-save").addEventListener("click",()=>{
+  const{wi,iso}=editing;
+  USER.planned[iso]=workPlanned;
+  const k=parseFloat($("#m-km").value);
+  const done=$("#m-done").checked,at=$("#m-atype").value.trim();
+  if(done||!isNaN(k)||at){USER.actuals[iso]={done,km:isNaN(k)?null:k,atype:at};}
+  else{delete USER.actuals[iso];}
+  const note=$("#m-note").value.trim(); if(note)USER.notes[iso]=note; else delete USER.notes[iso];
+  queueSave();close();render();
+});
+$("#m-clear").addEventListener("click",()=>{const{iso}=editing;delete USER.actuals[iso];delete USER.notes[iso];queueSave();close();render();});
+$("#m-cancel").addEventListener("click",close);
+ov.addEventListener("click",e=>{if(e.target===ov)close();});
+function close(){ov.classList.remove("show");editing=null;}
+
+$("#reset").addEventListener("click",()=>{if(confirm("Clear all YOUR edits (notes, manual logs, rearrangements)? Strava-imported data stays.")){USER={planned:{},actuals:{},notes:{}};queueSave();render();}});
+
+/* ---------- boot ---------- */
+async function boot(){
+  const pill=$("#syncpill");
+  pill.textContent = SB?"Cloud sync on":"Local only (this device)";
+  pill.className="syncpill "+(SB?"ok":"local");
+  try{const r=await fetch("data/activities.json?ts="+Date.now());if(r.ok)ACTIVITIES=await r.json();}catch(e){console.warn("no activities.json yet",e);}
+  USER=await loadUser(); USER.planned=USER.planned||{};USER.actuals=USER.actuals||{};USER.notes=USER.notes||{};
+  render();
+}
+boot();
+</script>
+</body>
+</html>

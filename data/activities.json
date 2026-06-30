@@ -1,0 +1,10 @@
+{
+  "2026-06-17": {"km": 18.7, "type": "Ride", "note": "Ride 18.7 km", "done": true, "sport": "ride"},
+  "2026-06-18": {"km": 5.0, "type": "Easy", "note": "6:11/km", "done": true, "sport": "run"},
+  "2026-06-21": {"km": 14.0, "type": "Long", "note": "6:05/km · Brisbane", "done": true, "sport": "run"},
+  "2026-06-24": {"km": 6.6, "type": "Intervals", "note": "6×400 m @ 3:54/km", "done": true, "sport": "run"},
+  "2026-06-25": {"km": 6.9, "type": "Easy", "note": "6:03/km", "done": true, "sport": "run"},
+  "2026-06-27": {"km": 6.7, "type": "Threshold", "note": "6 km continuous @ 4:36/km", "done": true, "sport": "run"},
+  "2026-06-28": {"km": 23.0, "type": "Long", "note": "6:02/km", "done": true, "sport": "run"},
+  "2026-06-30": {"km": 7.8, "type": "Intervals", "note": "4×800 m @ 4:24/km", "done": true, "sport": "run"}
+}
