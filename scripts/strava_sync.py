@@ -75,6 +75,10 @@ def categorise(act, laps):
     work = [l for l in laps if l.get("distance", 0) >= 200]
     note = f"{mmss(avg_pace)}/km"
 
+    # A long run is a long run, even with surges or an embedded tempo block.
+    if dist_km >= LONG_RUN_KM:
+        return "Long", note
+
     if len(work) >= 2:
         paces = sorted(pace_per_km(l["distance"], l["moving_time"]) for l in work)
         median = paces[len(paces) // 2]
@@ -96,14 +100,12 @@ def categorise(act, laps):
                 label_m = f"{rep_m} m" if rep_m < 1000 else f"{rep_m/1000:.1f} km"
                 return "Intervals", f"{len(same)}×{label_m} @ {mmss(p)}/km"
 
-    if dist_km >= LONG_RUN_KM:
-        return "Long", note
     return "Easy", note
 
 
 def main():
     token = access_token()
-    after = int((datetime.datetime.utcnow() - datetime.timedelta(days=DAYS_BACK)).timestamp())
+    after = int((datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=DAYS_BACK)).timestamp())
     acts = get("/athlete/activities", token, after=after, per_page=100)
 
     data = {}
