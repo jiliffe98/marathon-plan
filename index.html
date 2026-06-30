@@ -299,17 +299,18 @@ function volBar(actual,target){
   const delta=actual>0?`<span class="delta" style="color:${met?'var(--good)':'var(--warn)'}"> ${actual>=target?'+':''}${fmt(actual-target)}</span>`:"";
   return `<div class="vol-block"><div class="vol-lab"><span>Run km</span><span class="num">${fmt(actual)} / ${target} km${delta}</span></div><div class="bar"><div class="fill" style="width:${pct}%;background:${col}"></div></div></div>`;
 }
+const RUNCLASSES=["t-int","t-thr","t-easy","t-long","t-race"];
 function weekCounts(wi,isos){
   let planned=0,done=0;
   isos.forEach(iso=>{
-    plannedFor(wi,iso).forEach(p=>{if(typeClass(p.a)!=="t-rest")planned++;});
-    const a=actualFor(iso); if(a&&a.done)done++;
+    plannedFor(wi,iso).forEach(p=>{if(RUNCLASSES.includes(typeClass(p.a)))planned++;});
+    const a=actualFor(iso); if(a&&a.done&&a.sport!=="ride")done++;
   });
   return {planned,done};
 }
 function actBlock(done,planned){
   const pct=planned?Math.min(100,Math.round(done/planned*100)):0, met=planned&&done>=planned;
-  return `<div class="vol-block"><div class="vol-lab"><span>Activities</span><span class="num">${done} / ${planned} done</span></div><div class="bar"><div class="fill" style="width:${pct}%;background:${met?'var(--good)':'var(--harbour)'}"></div></div></div>`;
+  return `<div class="vol-block"><div class="vol-lab"><span>Activities</span><span class="num">${done} / ${planned}</span></div><div class="bar"><div class="fill" style="width:${pct}%;background:${met?'var(--good)':'var(--harbour)'}"></div></div></div>`;
 }
 function longBlock(actual,target){
   if(!target)return `<div class="vol-block"><div class="vol-lab"><span>Long run</span><span class="num">${actual?fmt(actual)+' km':'—'}</span></div><div class="bar"></div></div>`;
@@ -330,7 +331,7 @@ function render(){
       const hasActual=!!(a&&(a.done||typeof a.km==="number"||(a.note&&a.note.length)));
       const expandable=hasActual||!!note;
       // anchor the completion/notes to the best-matching planned chip
-      const RUN=["t-int","t-thr","t-easy","t-long","t-race"];
+      const RUN=RUNCLASSES;
       let anchor=-1;
       if(expandable){
         if(hasActual){
