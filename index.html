@@ -53,6 +53,7 @@
   .oprow{font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fbfcfd;line-height:1.35}
   .oprow b{font-variant-numeric:tabular-nums}
   .ai-summary{font-size:14px;font-weight:600;line-height:1.4}
+  .ai-reply{display:none;margin-top:8px;font-size:13px;font-weight:600;color:var(--harbour);background:var(--harbour-soft);border:1px solid #cfe1ea;border-radius:8px;padding:8px 10px;line-height:1.4}
 
   .weeks{display:flex;flex-direction:column;gap:18px;margin-top:20px}
   .past-label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--muted)}
@@ -201,6 +202,7 @@
           <button class="mic" id="ai-mic2" title="Dictate">🎤</button>
           <button class="btn" id="ai-refine">Refine</button>
         </div>
+        <div class="ai-reply" id="ai-reply"></div>
         <div class="ai-status" id="ai-status2"></div>
       </div>
     </div>
@@ -591,16 +593,18 @@ async function callPlan(statusEl){
   if(!r.ok||d.error)throw new Error(d.error||("HTTP "+r.status));
   return d;
 }
-function renderProposal(d){
+function renderProposal(d,isRefine){
   pendingOps=d.ops||[];
   $("#ai-sum").textContent=d.summary||"";
   $("#ai-ops").innerHTML=pendingOps.length?pendingOps.map(o=>`<div class="oprow">${opText(o)}</div>`).join(""):'<div class="oprow">No changes.</div>';
+  const rep=$("#ai-reply"), msg=d.reply||"";
+  if(isRefine&&msg){rep.textContent=msg;rep.style.display="block";}else{rep.textContent="";rep.style.display="none";}
   convo.push("Assistant proposed: "+(d.summary||"")+" | ops="+JSON.stringify(pendingOps));
 }
 async function aiSuggest(){
   const instruction=aiInput.value.trim(); if(!instruction)return;
   convo=["User: "+instruction]; aiGo.disabled=true;
-  try{const d=await callPlan(aiStatus);renderProposal(d);aiov.classList.add("show");setS(aiStatus,"");}
+  try{const d=await callPlan(aiStatus);renderProposal(d,false);aiov.classList.add("show");setS(aiStatus,"");}
   catch(e){setS(aiStatus,"Couldn't get suggestions: "+e.message,true);}
   finally{aiGo.disabled=false;}
 }
@@ -608,11 +612,11 @@ async function aiRefine(){
   const f=$("#ai-followup").value.trim(); if(!f)return;
   convo.push("User refinement: "+f);
   const btn=$("#ai-refine"); btn.disabled=true;
-  try{const d=await callPlan($("#ai-status2"));renderProposal(d);$("#ai-followup").value="";setS($("#ai-status2"),"");}
+  try{const d=await callPlan($("#ai-status2"));renderProposal(d,true);$("#ai-followup").value="";setS($("#ai-status2"),"");}
   catch(e){setS($("#ai-status2"),"Couldn't refine: "+e.message,true);}
   finally{btn.disabled=false;}
 }
-function aiClose(){aiov.classList.remove("show");pendingOps=null;convo=[];$("#ai-followup").value="";setS($("#ai-status2"),"");}
+function aiClose(){aiov.classList.remove("show");pendingOps=null;convo=[];$("#ai-followup").value="";setS($("#ai-status2"),"");const rep=$("#ai-reply");rep.textContent="";rep.style.display="none";}
 function wireDictation(input,mic,statusEl){
   let recog=null,recording=false;
   mic.addEventListener("click",()=>{

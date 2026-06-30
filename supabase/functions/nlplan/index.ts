@@ -48,7 +48,9 @@ Deno.serve(async (req) => {
       "- Only include changes the user actually asked for. Resolve relative dates (e.g. 'this Friday', " +
       "'next Sunday's long run') against the weekday/week info in the plan. If a request is impossible " +
       "(date not in plan), skip it and say so in the summary.\n" +
-      "- Keep `summary` to one or two plain-English sentences.";
+      "- `summary`: one or two plain-English sentences describing the COMPLETE set of proposed changes (the cumulative result).\n" +
+      "- `reply`: one short, friendly sentence addressed to the user's MOST RECENT message specifically — " +
+      "acknowledging what you just changed in response to it (or asking for clarification if it was unclear).";
 
     const tool = {
       name: "propose_changes",
@@ -56,7 +58,8 @@ Deno.serve(async (req) => {
       input_schema: {
         type: "object",
         properties: {
-          summary: { type: "string", description: "One or two sentence summary." },
+          summary: { type: "string", description: "One or two sentence summary of the complete proposed changes." },
+          reply: { type: "string", description: "Short sentence answering the user's most recent message specifically." },
           ops: {
             type: "array",
             items: {
