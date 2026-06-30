@@ -333,13 +333,14 @@ async function saveUser(){
 /* ---------- merge helpers ---------- */
 function dayIdx(wi,iso){return isoSeq(PLAN[wi].start).indexOf(iso);}
 function plannedFor(wi,iso){return USER.planned[iso] || defaultPlanned(PLAN[wi])[dayIdx(wi,iso)];}
-function actualFor(iso){
-  const auto=ACTIVITIES[iso]; const u=USER.actuals[iso];
-  if(!auto&&!u)return null;
-  const m=Object.assign({},auto||{},u||{});
-  m.fromStrava = !!auto && !u;          // purely auto = show Strava tag
-  return m;
+function autoArr(iso){const a=ACTIVITIES[iso];return a?(Array.isArray(a)?a:[a]):[];}
+function dayActuals(iso){
+  const out=autoArr(iso).map(x=>Object.assign({},x,{fromStrava:true}));
+  const u=USER.actuals[iso];
+  if(u&&(u.done||typeof u.km==="number"||(u.atype&&u.atype.length))) out.push(Object.assign({},u,{fromStrava:false}));
+  return out;
 }
+function actRunKm(a){return actCategory(a)==="run"&&typeof a.km==="number"?a.km:0;}
 
 /* ---------- render ---------- */
 const $=s=>document.querySelector(s);
@@ -347,8 +348,8 @@ const host=$("#weeks");
 const CHECK='<svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5l3.2 3.2L13 5" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 function todayISO(){const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
-function weekVol(isos){let v=0;isos.forEach(iso=>{const a=actualFor(iso);if(a&&a.sport!=="ride"&&typeof a.km==="number")v+=a.km;});return v;}
-function weekLong(isos){let m=0;isos.forEach(iso=>{const a=actualFor(iso);if(a&&a.sport!=="ride"&&typeof a.km==="number")m=Math.max(m,a.km);});return m;}
+function weekVol(isos){let v=0;isos.forEach(iso=>dayActuals(iso).forEach(a=>{v+=actRunKm(a);}));return v;}
+function weekLong(isos){let m=0;isos.forEach(iso=>dayActuals(iso).forEach(a=>{m=Math.max(m,actRunKm(a));}));return m;}
 
 function volBar(actual,target){
   if(!target)return `<div class="vol-block"><div class="vol-lab"><span>Run km</span><span class="num">${fmt(actual)} km</span></div><div class="bar"></div></div>`;
@@ -363,7 +364,7 @@ function weekCounts(wi,isos){
   let planned=0,done=0;
   isos.forEach(iso=>{
     plannedFor(wi,iso).forEach(p=>{if(RUNCLASSES.includes(typeClass(p.a)))planned++;});
-    const a=actualFor(iso); if(a&&a.done&&a.sport!=="ride")done++;
+    dayActuals(iso).forEach(a=>{if(a.done&&actCategory(a)==="run")done++;});
   });
   if(PLAN[wi].kind==="none")planned=done;   // unplanned week: whatever was done counts as the plan
   return {planned,done};
@@ -386,54 +387,59 @@ function render(){
     const vol=weekVol(isos),lng=weekLong(isos);
     const c=weekCounts(wi,isos);
     const days=isos.map((iso,di)=>{
-      const planned=plannedFor(wi,iso), a=actualFor(iso);
+      const planned=plannedFor(wi,iso);
       const note=USER.notes[iso];
-      const hasActual=!!(a&&(a.done||typeof a.km==="number"||(a.note&&a.note.length)));
+      const acts=dayActuals(iso);
       const isPastDay=iso<ti;
-      const cat=hasActual?actCategory(a):null;
-      // match strictly within category (run↔run, ride↔ride, strength↔strength)
-      let anchor=-1;
-      if(hasActual&&cat!=="other"){
-        anchor=planned.findIndex(p=>chipCategory(p)===cat&&typeClass(p.a)===typeClass(a.atype||a.type||""));
-        if(anchor<0)anchor=planned.findIndex(p=>chipCategory(p)===cat);
-      }
-      // a note with no completed activity hangs off the first run chip
-      let noteAnchor=-1;
-      if(!hasActual&&note){
-        noteAnchor=planned.findIndex(p=>chipCategory(p)==="run");
-        if(noteAnchor<0)noteAnchor=planned.findIndex(p=>chipCategory(p)!=="other");
+      // assign each actual to a planned chip — exact type first, then same category
+      const assign={}, used=new Set();
+      const pass=(exact)=>acts.forEach((act,idx)=>{
+        if(used.has(idx))return; const cat=actCategory(act); if(cat==="other")return;
+        const ai=planned.findIndex((p,i)=>!(i in assign)&&chipCategory(p)===cat&&(!exact||typeClass(p.a)===typeClass(act.atype||act.type||"")));
+        if(ai>=0){assign[ai]=act;used.add(idx);}
+      });
+      pass(true); pass(false);
+      const extraActs=acts.filter((_,idx)=>!used.has(idx));
+      // where the day note attaches: first assigned chip, else a run chip, else its own chip
+      let noteChip=-1;
+      if(note){
+        const a0=Object.keys(assign).map(Number).sort((x,y)=>x-y);
+        if(a0.length)noteChip=a0[0];
+        else{noteChip=planned.findIndex(p=>chipCategory(p)==="run");if(noteChip<0)noteChip=planned.findIndex(p=>chipCategory(p)!=="other");}
       }
       const cls=["day"];
       if(iso===ti)cls.push("today");
       if(planned.some(p=>p.race))cls.push("race");
-      const detailHTML=(completed)=>{
-        const tag=completed?(a.fromStrava?'<span class="src">Strava</span>':(a.done?'<span class="src manual">Logged</span>':"")):"";
-        const actLine=completed?`<div class="dl">${typeof a.km==="number"?`<span class="km">${fmt(a.km)} km</span> `:""}${a.atype||a.type||""}${tag}${a.note?`<div class="dn">${a.note}</div>`:""}</div>`:"";
-        const noteLine=note?`<div class="dl"><b>Note</b> ${note}</div>`:"";
-        return actLine+noteLine;
+      const detailHTML=(act,withNote)=>{
+        let h="";
+        if(act){
+          const tag=act.fromStrava?'<span class="src">Strava</span>':(act.done?'<span class="src manual">Logged</span>':"");
+          h+=`<div class="dl">${typeof act.km==="number"?`<span class="km">${fmt(act.km)} km</span> `:""}${act.atype||act.type||""}${tag}${act.note?`<div class="dn">${act.note}</div>`:""}</div>`;
+        }
+        if(withNote&&note)h+=`<div class="dl"><b>Note</b> ${note}</div>`;
+        return h;
       };
       const chips=planned.map((p,ai)=>({p,ai}))
         .sort((x,y)=>(chipCategory(x.p)==="run"?0:1)-(chipCategory(y.p)==="run"?0:1))
         .map(({p,ai})=>{
         const cat2=chipCategory(p);
         const km=p.km!=null?`<span class="km">${p.km}k</span>`:"";
-        const isAnchor=(ai===anchor), isNote=(ai===noteAnchor);
+        const act=assign[ai], hasNote=(ai===noteChip), done=!!act;
         let color="c-grey";
-        if(cat2==="run")color=isAnchor?"c-green":(isPastDay?"c-red":"c-blue");
-        if(!isAnchor&&!isNote)
+        if(cat2==="run")color=done?"c-green":(isPastDay?"c-red":"c-blue");
+        if(!done&&!hasNote)
           return `<div class="chip ${color}" draggable="true" data-loc="${iso}|${ai}"><span>${p.a}</span>${km}</div>`;
-        const ind=isAnchor?`<span class="tick">${CHECK}</span>`:`<span class="tick note-ind">✎</span>`;
-        return `<div class="chip ${color} done-chip${isAnchor?'':' note-only'}" draggable="true" data-loc="${iso}|${ai}"><div class="chiprow"><span>${p.a}</span>${km}${ind}</div><div class="chipdetail">${detailHTML(isAnchor)}</div></div>`;
+        const ind=done?`<span class="tick">${CHECK}</span>`:`<span class="tick note-ind">✎</span>`;
+        return `<div class="chip ${color} done-chip${done?'':' note-only'}" draggable="true" data-loc="${iso}|${ai}"><div class="chiprow"><span>${p.a}</span>${km}${ind}</div><div class="chipdetail">${detailHTML(act,hasNote)}</div></div>`;
       }).join("");
-      // completed activity with no matching planned slot: fixed chip, can't be dragged (Strava keeps its date)
-      let extra="";
-      if(hasActual&&anchor<0){
-        const ccolor=cat==="run"?"c-green":"c-grey";
-        extra=`<div class="chip ${ccolor} done-chip extra"><div class="chiprow"><span>${a.atype||a.type||"Done"}</span><span class="tick">${CHECK}</span></div><div class="chipdetail">${detailHTML(true)}</div></div>`;
-      }
-      // note on a day with no run chip and no activity
+      // activities with no matching planned slot: fixed chips, can't be dragged (Strava keeps its date)
+      const extra=extraActs.map(act=>{
+        const ccolor=actCategory(act)==="run"?"c-green":"c-grey";
+        return `<div class="chip ${ccolor} done-chip extra"><div class="chiprow"><span>${act.atype||act.type||"Done"}</span><span class="tick">${CHECK}</span></div><div class="chipdetail">${detailHTML(act,false)}</div></div>`;
+      }).join("");
+      // note with nowhere to attach
       let extraNote="";
-      if(!hasActual&&note&&noteAnchor<0)
+      if(note&&noteChip<0)
         extraNote=`<div class="chip c-grey done-chip note-only extra"><div class="chiprow"><span>Note</span><span class="tick note-ind">✎</span></div><div class="chipdetail"><div class="dl">${note}</div></div></div>`;
       return `<div class="${cls.join(' ')}" data-iso="${iso}" data-wi="${wi}"><div class="dhead"><span class="dname">${DNAMES[di]}</span><span class="dnum">${dispDate(iso)}</span></div><div class="chips">${chips}${extra}${extraNote}</div></div>`;
     }).join("");
@@ -453,7 +459,7 @@ function render(){
   out+=upWeeks.map(b=>b.html).join("");
   host.innerHTML=out;
   let sessions=0,km=0,longest=0;
-  PLAN.forEach(w=>isoSeq(w.start).forEach(iso=>{const a=actualFor(iso);if(!a)return;if(a.done)sessions++;if(a.sport!=="ride"&&typeof a.km==="number"){km+=a.km;longest=Math.max(longest,a.km);}}));
+  PLAN.forEach(w=>isoSeq(w.start).forEach(iso=>dayActuals(iso).forEach(a=>{if(a.done)sessions++;const rk=actRunKm(a);if(rk){km+=rk;longest=Math.max(longest,rk);}})));
   $("#s-sessions").textContent=sessions;$("#s-km").textContent=fmt(km)+" km";$("#s-long").textContent=fmt(longest)+" km";
 }
 
@@ -482,7 +488,7 @@ host.addEventListener("click",e=>{
 });
 function openEditor(wi,iso){
   editing={wi,iso};
-  const w=PLAN[wi],a=actualFor(iso)||{};
+  const w=PLAN[wi],a=USER.actuals[iso]||{};
   workPlanned=JSON.parse(JSON.stringify(plannedFor(wi,iso)));
   const di=isoSeq(w.start).indexOf(iso);
   $("#m-title").textContent=DNAMES[di]+" — Week "+w.no;

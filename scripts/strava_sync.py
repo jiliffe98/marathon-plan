@@ -112,42 +112,52 @@ def main():
     if OUT.exists():
         data = json.loads(OUT.read_text())
 
+    # Rebuild every in-window date from this pull (so each day holds ALL its
+    # activities, and edits/deletes on Strava are reflected). Each date maps to
+    # a LIST of activities.
+    after_date = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=DAYS_BACK)).strftime("%Y-%m-%d")
+    for k in list(data):
+        if k[:1].isdigit() and k >= after_date:
+            del data[k]
+
+    fresh = {}
     for a in acts:
         date = a["start_date_local"][:10]
         km = round(a["distance"] / 1000.0, 1)
         mins = round(a.get("moving_time", 0) / 60)
         s = (a.get("sport_type") or a.get("type") or "").lower()
-        if any(k in s for k in ("run",)):
+        if "run" in s:
             sport = "run"
         elif any(k in s for k in ("ride", "cycl", "bike", "ebike", "velomobile")):
             sport = "ride"
-        elif any(k in s for k in ("weight", "strength", "workout", "crossfit", "hiit")):
+        elif any(k in s for k in ("weight", "strength")):
             sport = "strength"
+        elif any(k in s for k in ("workout", "crossfit", "hiit")):
+            sport = "run" if km >= 0.5 else "strength"   # a "Workout" with distance is a running workout
         else:
             sport = "other"
 
-        if sport == "ride":
-            data[date] = {"km": km, "type": "Ride", "note": f"{km} km ride", "done": True, "sport": "ride"}
+        if sport == "run":
+            try:
+                laps = get(f"/activities/{a['id']}/laps", token)
+            except Exception:
+                laps = []
+            label, note = categorise(a, laps)
+            entry = {"km": km, "type": label, "note": note, "done": True, "sport": "run"}
+            print(f"  {date}  {label:10} {km:>5} km  ({note})")
+        elif sport == "ride":
+            entry = {"km": km, "type": "Ride", "note": f"{km} km ride", "done": True, "sport": "ride"}
             print(f"  {date}  Ride       {km:>5} km")
-            continue
-        if sport == "strength":
-            data[date] = {"km": None, "type": "Strength", "note": f"{mins} min", "done": True, "sport": "strength"}
+        elif sport == "strength":
+            entry = {"km": None, "type": "Strength", "note": f"{mins} min", "done": True, "sport": "strength"}
             print(f"  {date}  Strength   {mins:>4} min")
-            continue
-        if sport == "other":
-            data[date] = {"km": km, "type": a.get("sport_type") or "Activity", "note": f"{km} km",
-                          "done": True, "sport": "other"}
+        else:
+            entry = {"km": km, "type": a.get("sport_type") or "Activity", "note": f"{km} km",
+                     "done": True, "sport": "other"}
             print(f"  {date}  Other      {km:>5} km")
-            continue
+        fresh.setdefault(date, []).append(entry)
 
-        try:
-            laps = get(f"/activities/{a['id']}/laps", token)
-        except Exception:
-            laps = []
-        label, note = categorise(a, laps)
-        data[date] = {"km": km, "type": label, "note": note, "done": True, "sport": "run"}
-        print(f"  {date}  {label:10} {km:>5} km  ({note})")
-
+    data.update(fresh)
     data["_synced_at"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     OUT.write_text(json.dumps(dict(sorted(data.items())), indent=2) + "\n")
     days = sum(1 for k in data if k[:1].isdigit())
