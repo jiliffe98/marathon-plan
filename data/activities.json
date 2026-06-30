@@ -29,8 +29,8 @@
   },
   "2026-06-14": {
     "km": 21.1,
-    "type": "Threshold",
-    "note": "7.5 km continuous @ 4:59/km",
+    "type": "Long",
+    "note": "5:35/km",
     "done": true,
     "sport": "run"
   },
@@ -78,8 +78,8 @@
   },
   "2026-06-28": {
     "km": 23.0,
-    "type": "Threshold",
-    "note": "2.3 km continuous @ 5:22/km",
+    "type": "Long",
+    "note": "6:02/km",
     "done": true,
     "sport": "run"
   },
