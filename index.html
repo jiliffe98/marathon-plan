@@ -37,6 +37,23 @@
   button.btn:hover{border-color:var(--harbour);color:var(--harbour)}
   .hint{font-size:12px;color:var(--muted);margin:10px 0 0}
 
+  /* natural-language editor */
+  .aibar{display:none;margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;gap:8px;align-items:center}
+  .aibar.on{display:flex}
+  .aibar input{flex:1;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:9px 11px;color:var(--ink);min-width:0}
+  .aibar .mic{flex:none;width:38px;height:38px;border-radius:9px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-size:16px}
+  .aibar .mic.rec{background:var(--coral);border-color:var(--coral);color:#fff;animation:pulse 1s infinite}
+  @keyframes pulse{50%{opacity:.55}}
+  @media (prefers-reduced-motion:reduce){.aibar .mic.rec{animation:none}}
+  .ai-go{flex:none;background:var(--harbour);color:#fff;border-color:var(--harbour)}
+  .ai-go[disabled]{opacity:.6;cursor:default}
+  .ai-status{font-size:12px;color:var(--muted);margin:6px 2px 0;min-height:14px}
+  .ai-status.err{color:var(--coral)}
+  .oplist{display:flex;flex-direction:column;gap:7px;margin-top:4px}
+  .oprow{font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fbfcfd;line-height:1.35}
+  .oprow b{font-variant-numeric:tabular-nums}
+  .ai-summary{font-size:14px;font-weight:600;line-height:1.4}
+
   .weeks{display:flex;flex-direction:column;gap:18px;margin-top:20px}
   .past-label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--muted)}
   .week{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
@@ -162,8 +179,26 @@
   </div>
   <p class="hint">Volume counts logged runs only (rides excluded). Strava-imported sessions show an orange tag and can be overridden by tapping the day.</p>
 
+  <div class="aibar" id="aibar">
+    <input type="text" id="ai-input" placeholder="Ask to change the plan, e.g. “move Thursday's threshold to Friday”">
+    <button class="mic" id="ai-mic" title="Dictate">🎤</button>
+    <button class="btn ai-go" id="ai-go">Suggest</button>
+  </div>
+  <div class="ai-status" id="ai-status"></div>
+
   <div class="weeks" id="weeks"></div>
 </div></div>
+
+<div class="ov" id="aiov">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="m-head"><h3>Proposed changes</h3><p id="ai-sum" class="ai-summary"></p></div>
+    <div class="m-body"><div class="oplist" id="ai-ops"></div></div>
+    <div class="m-foot">
+      <button class="btn" id="ai-cancel">Cancel</button>
+      <button class="btn primary" id="ai-apply">Apply changes</button>
+    </div>
+  </div>
+</div>
 
 <div class="ov" id="ov">
   <div class="modal" role="dialog" aria-modal="true">
@@ -478,11 +513,105 @@ function close(){ov.classList.remove("show");editing=null;}
 
 $("#reset").addEventListener("click",()=>{if(confirm("Clear all YOUR edits (notes, manual logs, rearrangements)? Strava-imported data stays.")){USER={planned:{},actuals:{},notes:{}};queueSave();render();}});
 
+/* ---------- natural-language editing ---------- */
+const AI_ON = SB && CFG.AI_EDIT;
+function wiForIso(iso){return PLAN.findIndex(w=>isoSeq(w.start).includes(iso));}
+function matchIdx(arr,name){
+  const t=typeClass(name||"");
+  let i=arr.findIndex(p=>(p.a||"").toLowerCase()===(name||"").toLowerCase());
+  if(i<0)i=arr.findIndex(p=>typeClass(p.a)===t);
+  return i;
+}
+function planPayload(){
+  const out=[];
+  PLAN.forEach((w,wi)=>{const isos=isoSeq(w.start);isos.forEach((iso,di)=>{
+    const sessions=plannedFor(wi,iso).map(p=>p.km!=null?`${p.a} (${p.km}k)`:p.a);
+    out.push({date:iso,day:DNAMES[di],week:w.no,sessions});
+  });});
+  return out;
+}
+function opText(o){
+  const d=o.date?dispDate(o.date):"";
+  if(o.op==="move")return `Move <b>${o.session||"session"}</b> from ${o.from?dispDate(o.from):"?"} → <b>${d}</b>`;
+  if(o.op==="add")return `Add <b>${o.session||"session"}</b>${o.km!=null?` (${o.km}k)`:""} on <b>${d}</b>`;
+  if(o.op==="remove")return `Remove <b>${o.session||"session"}</b> from <b>${d}</b>`;
+  if(o.op==="setkm")return `Set <b>${o.session||"session"}</b> on <b>${d}</b> to <b>${o.km}k</b>`;
+  if(o.op==="note")return `Note on <b>${d}</b>: ${o.text||""}`;
+  return JSON.stringify(o);
+}
+function applyOps(ops){
+  ops.forEach(o=>{
+    if(o.op==="note"){ if(o.text)USER.notes[o.date]=o.text; else delete USER.notes[o.date]; return; }
+    const wi=wiForIso(o.date); if(wi<0)return;
+    const dst=plannedFor(wi,o.date).slice();
+    if(o.op==="move"){
+      const swi=wiForIso(o.from); if(swi<0)return;
+      const src=plannedFor(swi,o.from).slice();
+      const i=matchIdx(src,o.session);
+      const item=i>=0?src.splice(i,1)[0]:{a:o.session||"Session"};
+      if(o.km!=null)item.km=o.km;
+      dst.push(item); USER.planned[o.from]=src; USER.planned[o.date]=dst;
+    }else if(o.op==="add"){
+      const it={a:o.session||"Session"}; if(o.km!=null)it.km=o.km; dst.push(it); USER.planned[o.date]=dst;
+    }else if(o.op==="remove"){
+      const i=matchIdx(dst,o.session); if(i>=0)dst.splice(i,1); USER.planned[o.date]=dst;
+    }else if(o.op==="setkm"){
+      const i=matchIdx(dst,o.session); if(i>=0)dst[i]={...dst[i],km:o.km}; USER.planned[o.date]=dst;
+    }
+  });
+  queueSave(); render();
+}
+let pendingOps=null;
+const aiStatus=$("#ai-status"), aiInput=$("#ai-input"), aiGo=$("#ai-go"), aiov=$("#aiov");
+function setStatus(t,err){aiStatus.textContent=t||"";aiStatus.className="ai-status"+(err?" err":"");}
+async function aiSuggest(){
+  const instruction=aiInput.value.trim();
+  if(!instruction)return;
+  aiGo.disabled=true; setStatus("Thinking…");
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+"/functions/v1/nlplan",{
+      method:"POST",
+      headers:{"content-type":"application/json",apikey:CFG.SUPABASE_ANON_KEY,Authorization:"Bearer "+CFG.SUPABASE_ANON_KEY},
+      body:JSON.stringify({instruction,plan:planPayload()})});
+    const d=await r.json();
+    if(!r.ok||d.error)throw new Error(d.error||("HTTP "+r.status));
+    if(!d.ops||!d.ops.length){setStatus(d.summary||"No changes suggested.");return;}
+    pendingOps=d.ops;
+    $("#ai-sum").textContent=d.summary||"";
+    $("#ai-ops").innerHTML=d.ops.map(o=>`<div class="oprow">${opText(o)}</div>`).join("");
+    aiov.classList.add("show");
+    setStatus("");
+  }catch(e){setStatus("Couldn't get suggestions: "+e.message,true);}
+  finally{aiGo.disabled=false;}
+}
+function aiClose(){aiov.classList.remove("show");pendingOps=null;}
+if(AI_ON){
+  aiGo.addEventListener("click",aiSuggest);
+  aiInput.addEventListener("keydown",e=>{if(e.key==="Enter")aiSuggest();});
+  $("#ai-apply").addEventListener("click",()=>{if(pendingOps)applyOps(pendingOps);aiInput.value="";aiClose();setStatus("Changes applied.");});
+  $("#ai-cancel").addEventListener("click",aiClose);
+  aiov.addEventListener("click",e=>{if(e.target===aiov)aiClose();});
+  // dictation via Web Speech API
+  const mic=$("#ai-mic"); let recog=null,recording=false;
+  mic.addEventListener("click",()=>{
+    const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+    if(!SR){setStatus("Voice input isn't supported in this browser — type instead.",true);return;}
+    if(recording&&recog){recog.stop();return;}
+    recog=new SR();recog.lang="en-AU";recog.interimResults=true;recog.continuous=false;
+    const base=aiInput.value?aiInput.value.trim()+" ":"";
+    recog.onresult=e=>{let t="";for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;aiInput.value=base+t;};
+    recog.onend=()=>{recording=false;mic.classList.remove("rec");};
+    recog.onerror=()=>{recording=false;mic.classList.remove("rec");};
+    recording=true;mic.classList.add("rec");recog.start();
+  });
+}
+
 /* ---------- boot ---------- */
 async function boot(){
   const pill=$("#syncpill");
   pill.textContent = SB?"Cloud sync on":"Local only (this device)";
   pill.className="syncpill "+(SB?"ok":"local");
+  if(AI_ON)$("#aibar").classList.add("on");
   try{const r=await fetch("data/activities.json?ts="+Date.now());if(r.ok)ACTIVITIES=await r.json();}catch(e){console.warn("no activities.json yet",e);}
   USER=await loadUser(); USER.planned=USER.planned||{};USER.actuals=USER.actuals||{};USER.notes=USER.notes||{};
   render();
