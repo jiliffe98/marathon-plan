@@ -84,11 +84,18 @@
   .t-race{background:var(--coral);color:#fff}
   .t-other{background:#eef0f3;color:#5a6470}
 
-  .actual{margin-top:8px;border-top:1px dashed var(--line);padding-top:7px;display:flex;gap:6px;align-items:flex-start;font-size:11.5px;color:var(--good);font-weight:700}
-  .actual svg{width:13px;height:13px;flex:none;margin-top:1px}
-  .actual .txt{font-weight:600;line-height:1.3}
-  .actual .km{font-weight:800}
-  .actual .src{display:inline-block;margin-left:4px;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:#fc5200;border-radius:4px;padding:1px 4px;vertical-align:middle}
+  /* completion tick on the matching planned chip */
+  .chip.done-chip{box-shadow:inset 0 0 0 1px var(--good)}
+  .chip .tick{display:inline-flex;align-items:center;justify-content:center;margin-left:auto;width:16px;height:16px;flex:none;border-radius:50%;background:var(--good);color:#fff;cursor:pointer}
+  .chip.done-chip .km{margin-left:auto}
+  .chip.done-chip .km + .tick{margin-left:5px}
+  .chip .tick svg{width:11px;height:11px}
+  .daydetail{display:none;margin-top:7px;font-size:11.5px;color:var(--good);font-weight:600;background:var(--ride-soft);border:1px solid #cfe3d6;border-radius:7px;padding:6px 8px;line-height:1.35}
+  .daydetail.show{display:block}
+  .daydetail .km{font-weight:800}
+  .daydetail .dn{font-weight:500;color:#3f6b52;margin-top:2px}
+  .daydetail .src{display:inline-block;margin-left:5px;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:#fc5200;border-radius:4px;padding:1px 4px;vertical-align:middle}
+  .daydetail .src.manual{background:var(--harbour)}
   .note{margin-top:6px;font-size:11px;color:#8a6d2b;background:#fdf6e3;border:1px solid #f0e4bf;border-radius:6px;padding:4px 7px;line-height:1.3}
 
   .ov{position:fixed;inset:0;background:rgba(20,28,40,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
@@ -303,18 +310,29 @@ function render(){
     const vol=weekVol(isos),lng=weekLong(isos);
     const days=isos.map((iso,di)=>{
       const planned=plannedFor(wi,iso), a=actualFor(iso);
+      const hasActual=!!(a&&(a.done||typeof a.km==="number"||a.note));
+      // tick the planned chip that best matches the actual session type
+      let matchIdx=-1;
+      if(hasActual){
+        const at=a.atype||a.type||"";
+        matchIdx=planned.findIndex(p=>typeClass(p.a)===typeClass(at));
+        if(matchIdx<0&&planned.length)matchIdx=0;
+      }
       const cls=["day"];
       if(a&&a.done)cls.push("done");
       if(iso===ti)cls.push("today");
       if(planned.some(p=>p.race))cls.push("race");
-      const chips=planned.map((p,ai)=>`<div class="chip ${typeClass(p.a)}" draggable="true" data-loc="${iso}|${ai}"><span>${p.a}</span>${p.km!=null?`<span class="km">${p.km}k</span>`:""}</div>`).join("");
-      let actHTML="";
-      if(a&&(a.done||typeof a.km==="number"||a.note)){
-        const tag=a.fromStrava?'<span class="src">Strava</span>':"";
-        actHTML=`<div class="actual">${CHECK}<div class="txt">${typeof a.km==="number"?`<span class="km">${fmt(a.km)} km</span> `:""}${a.atype||a.type||""}${tag}${a.note?`<div style="font-weight:500;color:#3f6b52">${a.note}</div>`:""}</div></div>`;
+      const chips=planned.map((p,ai)=>{
+        const tick=(ai===matchIdx)?`<span class="tick" data-detail="${iso}" title="Show session detail">${CHECK}</span>`:"";
+        return `<div class="chip ${typeClass(p.a)}${ai===matchIdx?' done-chip':''}" draggable="true" data-loc="${iso}|${ai}"><span>${p.a}</span>${p.km!=null?`<span class="km">${p.km}k</span>`:""}${tick}</div>`;
+      }).join("");
+      let detail="";
+      if(hasActual){
+        const tag=a.fromStrava?'<span class="src">Strava</span>':(a.done?'<span class="src manual">Logged</span>':"");
+        detail=`<div class="daydetail" id="dd-${iso}"><div class="txt">${typeof a.km==="number"?`<span class="km">${fmt(a.km)} km</span> `:""}${a.atype||a.type||""}${tag}${a.note?`<div class="dn">${a.note}</div>`:""}</div></div>`;
       }
       const note=USER.notes[iso]?`<div class="note">${USER.notes[iso]}</div>`:"";
-      return `<div class="${cls.join(' ')}" data-iso="${iso}" data-wi="${wi}"><div class="dhead"><span class="dname">${DNAMES[di]}</span><span class="dnum">${dispDate(iso)}</span></div><div class="chips">${chips}</div>${actHTML}${note}</div>`;
+      return `<div class="${cls.join(' ')}" data-iso="${iso}" data-wi="${wi}"><div class="dhead"><span class="dname">${DNAMES[di]}</span><span class="dnum">${dispDate(iso)}</span></div><div class="chips">${chips}</div>${detail}${note}</div>`;
     }).join("");
     const html=`<div class="week"><div class="wk-head"><span class="wk-no">WEEK ${w.no}</span><span class="wk-range">${w.range}</span>${w.tag?`<span class="wk-tag">· ${w.tag}</span>`:""}<div class="wk-vol">${longBlock(lng,w.long)}${volBar(vol,w.total)}</div></div><div class="grid">${days}</div></div>`;
     return {html,past};
@@ -348,7 +366,12 @@ host.addEventListener("drop",e=>{const d=e.target.closest(".day");if(!d)return;e
 /* ---------- editor ---------- */
 let editing=null,workPlanned=null;
 const ov=$("#ov");
-host.addEventListener("click",e=>{if(e.target.closest(".chip"))return;const d=e.target.closest(".day");if(d)openEditor(+d.dataset.wi,d.dataset.iso);});
+host.addEventListener("click",e=>{
+  const t=e.target.closest(".tick");
+  if(t){e.stopPropagation();const dd=document.getElementById("dd-"+t.dataset.detail);if(dd)dd.classList.toggle("show");return;}
+  if(e.target.closest(".chip"))return;
+  const d=e.target.closest(".day");if(d)openEditor(+d.dataset.wi,d.dataset.iso);
+});
 function openEditor(wi,iso){
   editing={wi,iso};
   const w=PLAN[wi],a=actualFor(iso)||{};
