@@ -84,10 +84,11 @@
     "sport": "run"
   },
   "2026-06-30": {
-    "km": 7.8,
-    "type": "Intervals",
-    "note": "5\u00d7800 m @ 4:32/km",
+    "km": null,
+    "type": "Strength",
+    "note": "40 min",
     "done": true,
-    "sport": "run"
-  }
+    "sport": "strength"
+  },
+  "_synced_at": "2026-06-30T09:44:33Z"
 }
