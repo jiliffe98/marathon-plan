@@ -303,8 +303,7 @@ function volBar(actual,target){
   if(!target)return `<div class="vol-block"><div class="vol-lab"><span>Run km</span><span class="num">${fmt(actual)} km</span></div><div class="bar"></div></div>`;
   const pct=Math.min(100,Math.round(actual/target*100)),met=actual>=target-0.001;
   const col=met?"var(--good)":(pct>=80?"var(--harbour)":"var(--warn)");
-  const delta=actual>0?`<span class="delta" style="color:${met?'var(--good)':'var(--warn)'}"> ${actual>=target?'+':''}${fmt(actual-target)}</span>`:"";
-  return `<div class="vol-block"><div class="vol-lab"><span>Run km</span><span class="num">${fmt(actual)} / ${target} km${delta}</span></div><div class="bar"><div class="fill" style="width:${pct}%;background:${col}"></div></div></div>`;
+  return `<div class="vol-block"><div class="vol-lab"><span>Run km</span><span class="num">${fmt(actual)} / ${target} km</span></div><div class="bar"><div class="fill" style="width:${pct}%;background:${col}"></div></div></div>`;
 }
 const RUNCLASSES=["t-int","t-thr","t-easy","t-long","t-race"];
 function chipCategory(p){const tc=typeClass(p.a);if(tc==="t-ride")return"ride";if(tc==="t-str")return"strength";if(RUNCLASSES.includes(tc))return"run";return"other";}
