@@ -38,14 +38,14 @@
   .hint{font-size:12px;color:var(--muted);margin:10px 0 0}
 
   .weeks{display:flex;flex-direction:column;gap:18px;margin-top:20px}
-  .past-weeks{border:1px dashed var(--line);border-radius:14px;background:#fbfcfd}
-  .past-weeks>summary{cursor:pointer;list-style:none;padding:14px 18px;font-size:13px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:9px}
-  .past-weeks>summary::-webkit-details-marker{display:none}
-  .past-weeks>summary::before{content:"▸";font-size:11px;color:var(--harbour);transition:transform .15s}
-  .past-weeks[open]>summary::before{transform:rotate(90deg)}
-  .past-weeks[open]>summary{border-bottom:1px solid var(--line)}
-  .weeks-inner{display:flex;flex-direction:column;gap:18px;padding:18px}
+  .past-label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--muted)}
   .week{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+  details.week.past{background:#fbfcfd}
+  details.week.past>summary{cursor:pointer;list-style:none}
+  details.week.past>summary::-webkit-details-marker{display:none}
+  details.week.past>summary::before{content:"▸";font-size:11px;color:var(--harbour);transition:transform .15s;margin-right:2px}
+  details.week.past[open]>summary::before{transform:rotate(90deg)}
+  details.week.past:not([open])>summary{border-bottom:none}
   .wk-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:13px 18px;border-bottom:1px solid var(--line);background:linear-gradient(0deg,#fff,#fbfcfd)}
   .wk-no{font-size:12px;font-weight:800;color:var(--harbour);letter-spacing:.1em}
   .wk-range{font-size:16px;font-weight:700}
@@ -290,11 +290,23 @@ function weekVol(isos){let v=0;isos.forEach(iso=>{const a=actualFor(iso);if(a&&a
 function weekLong(isos){let m=0;isos.forEach(iso=>{const a=actualFor(iso);if(a&&a.sport!=="ride"&&typeof a.km==="number")m=Math.max(m,a.km);});return m;}
 
 function volBar(actual,target){
-  if(!target)return `<div class="vol-block"><div class="vol-lab"><span>Total</span><span class="num">${fmt(actual)} km</span></div><div class="bar"></div></div>`;
+  if(!target)return `<div class="vol-block"><div class="vol-lab"><span>Run km</span><span class="num">${fmt(actual)} km</span></div><div class="bar"></div></div>`;
   const pct=Math.min(100,Math.round(actual/target*100)),met=actual>=target-0.001;
   const col=met?"var(--good)":(pct>=80?"var(--harbour)":"var(--warn)");
   const delta=actual>0?`<span class="delta" style="color:${met?'var(--good)':'var(--warn)'}"> ${actual>=target?'+':''}${fmt(actual-target)}</span>`:"";
-  return `<div class="vol-block"><div class="vol-lab"><span>Total</span><span class="num">${fmt(actual)} / ${target} km${delta}</span></div><div class="bar"><div class="fill" style="width:${pct}%;background:${col}"></div></div></div>`;
+  return `<div class="vol-block"><div class="vol-lab"><span>Run km</span><span class="num">${fmt(actual)} / ${target} km${delta}</span></div><div class="bar"><div class="fill" style="width:${pct}%;background:${col}"></div></div></div>`;
+}
+function weekCounts(wi,isos){
+  let planned=0,done=0;
+  isos.forEach(iso=>{
+    plannedFor(wi,iso).forEach(p=>{if(typeClass(p.a)!=="t-rest")planned++;});
+    const a=actualFor(iso); if(a&&a.done)done++;
+  });
+  return {planned,done};
+}
+function actBlock(done,planned){
+  const pct=planned?Math.min(100,Math.round(done/planned*100)):0, met=planned&&done>=planned;
+  return `<div class="vol-block"><div class="vol-lab"><span>Activities</span><span class="num">${done} / ${planned} done</span></div><div class="bar"><div class="fill" style="width:${pct}%;background:${met?'var(--good)':'var(--harbour)'}"></div></div></div>`;
 }
 function longBlock(actual,target){
   if(!target)return `<div class="vol-block"><div class="vol-lab"><span>Long run</span><span class="num">${actual?fmt(actual)+' km':'—'}</span></div><div class="bar"></div></div>`;
@@ -308,6 +320,7 @@ function render(){
     const isos=isoSeq(w.start);
     const past=isos[6]<ti;   // whole week is in the past
     const vol=weekVol(isos),lng=weekLong(isos);
+    const c=weekCounts(wi,isos);
     const days=isos.map((iso,di)=>{
       const planned=plannedFor(wi,iso), a=actualFor(iso);
       const hasActual=!!(a&&(a.done||typeof a.km==="number"||a.note));
@@ -334,13 +347,17 @@ function render(){
       const note=USER.notes[iso]?`<div class="note">${USER.notes[iso]}</div>`:"";
       return `<div class="${cls.join(' ')}" data-iso="${iso}" data-wi="${wi}"><div class="dhead"><span class="dname">${DNAMES[di]}</span><span class="dnum">${dispDate(iso)}</span></div><div class="chips">${chips}</div>${detail}${note}</div>`;
     }).join("");
-    const html=`<div class="week"><div class="wk-head"><span class="wk-no">WEEK ${w.no}</span><span class="wk-range">${w.range}</span>${w.tag?`<span class="wk-tag">· ${w.tag}</span>`:""}<div class="wk-vol">${longBlock(lng,w.long)}${volBar(vol,w.total)}</div></div><div class="grid">${days}</div></div>`;
+    const headInner=`<span class="wk-no">WEEK ${w.no}</span><span class="wk-range">${w.range}</span>${w.tag?`<span class="wk-tag">· ${w.tag}</span>`:""}<div class="wk-vol">${volBar(vol,w.total)}${actBlock(c.done,c.planned)}${longBlock(lng,w.long)}</div>`;
+    const html = past
+      ? `<details class="week past"><summary class="wk-head">${headInner}</summary><div class="grid">${days}</div></details>`
+      : `<div class="week"><div class="wk-head">${headInner}</div><div class="grid">${days}</div></div>`;
     return {html,past};
   });
   const pastWeeks=built.filter(b=>b.past), upWeeks=built.filter(b=>!b.past);
   let out="";
   if(pastWeeks.length){
-    out+=`<details class="past-weeks"><summary>Completed weeks (${pastWeeks.length})</summary><div class="weeks-inner">${pastWeeks.map(b=>b.html).join("")}</div></details>`;
+    out+=`<div class="past-label">Completed weeks (${pastWeeks.length}) — tap a week to expand</div>`;
+    out+=pastWeeks.map(b=>b.html).join("");
   }
   out+=upWeeks.map(b=>b.html).join("");
   host.innerHTML=out;
