@@ -256,7 +256,8 @@ async function saveUser(){
 }
 
 /* ---------- merge helpers ---------- */
-function plannedFor(wi,iso){return USER.planned[iso] || defaultPlanned(PLAN[wi]);}
+function dayIdx(wi,iso){return isoSeq(PLAN[wi].start).indexOf(iso);}
+function plannedFor(wi,iso){return USER.planned[iso] || defaultPlanned(PLAN[wi])[dayIdx(wi,iso)];}
 function actualFor(iso){
   const auto=ACTIVITIES[iso]; const u=USER.actuals[iso];
   if(!auto&&!u)return null;
@@ -322,8 +323,8 @@ host.addEventListener("drop",e=>{const d=e.target.closest(".day");if(!d)return;e
   const src=e.dataTransfer.getData("text/plain");if(!src)return;
   const[siso,sai]=src.split("|"); const tiso=d.dataset.iso; if(siso===tiso)return;
   const swi=+document.querySelector(`[data-iso="${siso}"]`).dataset.wi, twi=+d.dataset.wi;
-  const sArr=(USER.planned[siso]||defaultPlanned(PLAN[swi]).map(x=>x)).slice();
-  const tArr=(USER.planned[tiso]||defaultPlanned(PLAN[twi]).map(x=>x)).slice();
+  const sArr=plannedFor(swi,siso).slice();
+  const tArr=plannedFor(twi,tiso).slice();
   const item=sArr.splice(+sai,1)[0]; if(!item)return; tArr.push(item);
   USER.planned[siso]=sArr; USER.planned[tiso]=tArr; queueSave(); render();
 });
@@ -359,7 +360,7 @@ function renderMove(wi,iso){
 $("#m-move").addEventListener("click",e=>{const b=e.target.closest("[data-mv]");if(!b||!workPlanned.length)return;
   const tiso=b.dataset.mv, twi=+document.querySelector(`[data-iso="${tiso}"]`).dataset.wi;
   const item=workPlanned.shift();
-  const tArr=(USER.planned[tiso]||defaultPlanned(PLAN[twi])).slice(); tArr.push(item); USER.planned[tiso]=tArr;
+  const tArr=plannedFor(twi,tiso).slice(); tArr.push(item); USER.planned[tiso]=tArr;
   renderPlanned();renderMove(editing.wi,editing.iso);
 });
 $("#m-planned").addEventListener("click",e=>{const x=e.target.closest(".x");if(!x)return;workPlanned.splice(+x.dataset.i,1);renderPlanned();renderMove(editing.wi,editing.iso);});
