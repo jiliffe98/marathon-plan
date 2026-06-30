@@ -38,6 +38,13 @@
   .hint{font-size:12px;color:var(--muted);margin:10px 0 0}
 
   .weeks{display:flex;flex-direction:column;gap:18px;margin-top:20px}
+  .past-weeks{border:1px dashed var(--line);border-radius:14px;background:#fbfcfd}
+  .past-weeks>summary{cursor:pointer;list-style:none;padding:14px 18px;font-size:13px;font-weight:700;color:var(--muted);display:flex;align-items:center;gap:9px}
+  .past-weeks>summary::-webkit-details-marker{display:none}
+  .past-weeks>summary::before{content:"▸";font-size:11px;color:var(--harbour);transition:transform .15s}
+  .past-weeks[open]>summary::before{transform:rotate(90deg)}
+  .past-weeks[open]>summary{border-bottom:1px solid var(--line)}
+  .weeks-inner{display:flex;flex-direction:column;gap:18px;padding:18px}
   .week{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
   .wk-head{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:13px 18px;border-bottom:1px solid var(--line);background:linear-gradient(0deg,#fff,#fbfcfd)}
   .wk-no{font-size:12px;font-weight:800;color:var(--harbour);letter-spacing:.1em}
@@ -290,8 +297,9 @@ function longBlock(actual,target){
 
 function render(){
   const ti=todayISO();
-  host.innerHTML=PLAN.map((w,wi)=>{
+  const built=PLAN.map((w,wi)=>{
     const isos=isoSeq(w.start);
+    const past=isos[6]<ti;   // whole week is in the past
     const vol=weekVol(isos),lng=weekLong(isos);
     const days=isos.map((iso,di)=>{
       const planned=plannedFor(wi,iso), a=actualFor(iso);
@@ -308,8 +316,16 @@ function render(){
       const note=USER.notes[iso]?`<div class="note">${USER.notes[iso]}</div>`:"";
       return `<div class="${cls.join(' ')}" data-iso="${iso}" data-wi="${wi}"><div class="dhead"><span class="dname">${DNAMES[di]}</span><span class="dnum">${dispDate(iso)}</span></div><div class="chips">${chips}</div>${actHTML}${note}</div>`;
     }).join("");
-    return `<div class="week"><div class="wk-head"><span class="wk-no">WEEK ${w.no}</span><span class="wk-range">${w.range}</span>${w.tag?`<span class="wk-tag">· ${w.tag}</span>`:""}<div class="wk-vol">${longBlock(lng,w.long)}${volBar(vol,w.total)}</div></div><div class="grid">${days}</div></div>`;
-  }).join("");
+    const html=`<div class="week"><div class="wk-head"><span class="wk-no">WEEK ${w.no}</span><span class="wk-range">${w.range}</span>${w.tag?`<span class="wk-tag">· ${w.tag}</span>`:""}<div class="wk-vol">${longBlock(lng,w.long)}${volBar(vol,w.total)}</div></div><div class="grid">${days}</div></div>`;
+    return {html,past};
+  });
+  const pastWeeks=built.filter(b=>b.past), upWeeks=built.filter(b=>!b.past);
+  let out="";
+  if(pastWeeks.length){
+    out+=`<details class="past-weeks"><summary>Completed weeks (${pastWeeks.length})</summary><div class="weeks-inner">${pastWeeks.map(b=>b.html).join("")}</div></details>`;
+  }
+  out+=upWeeks.map(b=>b.html).join("");
+  host.innerHTML=out;
   let sessions=0,km=0,longest=0;
   PLAN.forEach(w=>isoSeq(w.start).forEach(iso=>{const a=actualFor(iso);if(!a)return;if(a.done)sessions++;if(a.sport!=="ride"&&typeof a.km==="number"){km+=a.km;longest=Math.max(longest,a.km);}}));
   $("#s-sessions").textContent=sessions;$("#s-km").textContent=fmt(km)+" km";$("#s-long").textContent=fmt(longest)+" km";
