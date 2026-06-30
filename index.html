@@ -138,11 +138,10 @@
   .movebar button{font-size:11px;padding:4px 8px}
 
   @media (max-width:820px){
-    /* fill column-first: Mon–Thu down the left, Fri–Sun down the right */
-    .grid{grid-template-columns:1fr 1fr;grid-template-rows:repeat(4,auto);grid-auto-flow:column}
+    /* one day per row */
+    .grid{grid-template-columns:1fr}
     .day{min-height:auto;border-right:none;border-top:1px solid var(--line)}
-    .day:nth-child(-n+4){border-right:1px solid var(--line)}  /* left column divider */
-    .day:nth-child(1),.day:nth-child(5){border-top:none}      /* top of each column */
+    .day:first-child{border-top:none}
     .wk-vol{margin-left:0;width:100%}
   }
 </style>
