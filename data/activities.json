@@ -1,94 +1,139 @@
 {
-  "2026-06-09": {
-    "km": 5.7,
-    "type": "Ride",
-    "note": "5.7 km ride",
-    "done": true,
-    "sport": "ride"
-  },
-  "2026-06-10": {
-    "km": 2.9,
-    "type": "Ride",
-    "note": "2.9 km ride",
-    "done": true,
-    "sport": "ride"
-  },
-  "2026-06-12": {
-    "km": 1.4,
-    "type": "Easy",
-    "note": "5:59/km",
-    "done": true,
-    "sport": "run"
-  },
-  "2026-06-13": {
-    "km": 5.6,
-    "type": "Ride",
-    "note": "5.6 km ride",
-    "done": true,
-    "sport": "ride"
-  },
-  "2026-06-14": {
-    "km": 21.1,
-    "type": "Long",
-    "note": "5:35/km",
-    "done": true,
-    "sport": "run"
-  },
-  "2026-06-17": {
-    "km": 18.7,
-    "type": "Ride",
-    "note": "18.7 km ride",
-    "done": true,
-    "sport": "ride"
-  },
-  "2026-06-18": {
-    "km": 5.0,
-    "type": "Easy",
-    "note": "6:12/km",
-    "done": true,
-    "sport": "run"
-  },
-  "2026-06-21": {
-    "km": 14.0,
-    "type": "Easy",
-    "note": "6:05/km",
-    "done": true,
-    "sport": "run"
-  },
-  "2026-06-24": {
-    "km": 6.5,
-    "type": "Intervals",
-    "note": "6\u00d7401 m @ 3:55/km",
-    "done": true,
-    "sport": "run"
-  },
-  "2026-06-25": {
-    "km": 6.9,
-    "type": "Easy",
-    "note": "6:03/km",
-    "done": true,
-    "sport": "run"
-  },
-  "2026-06-27": {
-    "km": 6.7,
-    "type": "Threshold",
-    "note": "6.0 km continuous @ 4:36/km",
-    "done": true,
-    "sport": "run"
-  },
-  "2026-06-28": {
-    "km": 23.0,
-    "type": "Long",
-    "note": "6:02/km",
-    "done": true,
-    "sport": "run"
-  },
-  "2026-06-30": {
-    "km": null,
-    "type": "Strength",
-    "note": "40 min",
-    "done": true,
-    "sport": "strength"
-  },
-  "_synced_at": "2026-06-30T11:47:30Z"
+  "2026-06-10": [
+    {
+      "km": 31.0,
+      "type": "Ride",
+      "note": "31.0 km ride",
+      "done": true,
+      "sport": "ride"
+    },
+    {
+      "km": 2.9,
+      "type": "Ride",
+      "note": "2.9 km ride",
+      "done": true,
+      "sport": "ride"
+    }
+  ],
+  "2026-06-12": [
+    {
+      "km": 1.4,
+      "type": "Easy",
+      "note": "5:59/km",
+      "done": true,
+      "sport": "run"
+    }
+  ],
+  "2026-06-13": [
+    {
+      "km": 5.6,
+      "type": "Ride",
+      "note": "5.6 km ride",
+      "done": true,
+      "sport": "ride"
+    }
+  ],
+  "2026-06-14": [
+    {
+      "km": 1.8,
+      "type": "Swim",
+      "note": "1.8 km",
+      "done": true,
+      "sport": "other"
+    },
+    {
+      "km": 91.0,
+      "type": "Ride",
+      "note": "91.0 km ride",
+      "done": true,
+      "sport": "ride"
+    },
+    {
+      "km": 21.1,
+      "type": "Long",
+      "note": "5:35/km",
+      "done": true,
+      "sport": "run"
+    }
+  ],
+  "2026-06-17": [
+    {
+      "km": 18.7,
+      "type": "Ride",
+      "note": "18.7 km ride",
+      "done": true,
+      "sport": "ride"
+    }
+  ],
+  "2026-06-18": [
+    {
+      "km": 5.0,
+      "type": "Easy",
+      "note": "6:12/km",
+      "done": true,
+      "sport": "run"
+    }
+  ],
+  "2026-06-21": [
+    {
+      "km": 14.0,
+      "type": "Easy",
+      "note": "6:05/km",
+      "done": true,
+      "sport": "run"
+    }
+  ],
+  "2026-06-24": [
+    {
+      "km": 6.5,
+      "type": "Intervals",
+      "note": "6\u00d7401 m @ 3:55/km",
+      "done": true,
+      "sport": "run"
+    }
+  ],
+  "2026-06-25": [
+    {
+      "km": 6.9,
+      "type": "Easy",
+      "note": "6:03/km",
+      "done": true,
+      "sport": "run"
+    }
+  ],
+  "2026-06-27": [
+    {
+      "km": 6.7,
+      "type": "Threshold",
+      "note": "6.0 km continuous @ 4:36/km",
+      "done": true,
+      "sport": "run"
+    }
+  ],
+  "2026-06-28": [
+    {
+      "km": 23.0,
+      "type": "Long",
+      "note": "6:02/km",
+      "done": true,
+      "sport": "run"
+    }
+  ],
+  "2026-06-30": [
+    {
+      "km": 7.8,
+      "type": "Intervals",
+      "note": "5\u00d7800 m @ 4:32/km",
+      "done": true,
+      "sport": "run"
+    },
+    {
+      "km": null,
+      "type": "Strength",
+      "note": "40 min",
+      "done": true,
+      "sport": "strength"
+    }
+  ],
+  "_synced_at": "2026-06-30T12:43:16Z"
 }
