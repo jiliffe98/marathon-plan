@@ -192,7 +192,18 @@
 <div class="ov" id="aiov">
   <div class="modal" role="dialog" aria-modal="true">
     <div class="m-head"><h3>Proposed changes</h3><p id="ai-sum" class="ai-summary"></p></div>
-    <div class="m-body"><div class="oplist" id="ai-ops"></div></div>
+    <div class="m-body">
+      <div class="oplist" id="ai-ops"></div>
+      <div class="fld" style="margin-top:4px">
+        <label class="cap">Not quite? Refine it</label>
+        <div class="addrow">
+          <input type="text" id="ai-followup" placeholder="e.g. “make it 30k instead” or “also move the ride”">
+          <button class="mic" id="ai-mic2" title="Dictate">🎤</button>
+          <button class="btn" id="ai-refine">Refine</button>
+        </div>
+        <div class="ai-status" id="ai-status2"></div>
+      </div>
+    </div>
     <div class="m-foot">
       <button class="btn" id="ai-cancel">Cancel</button>
       <button class="btn primary" id="ai-apply">Apply changes</button>
@@ -561,49 +572,71 @@ function applyOps(ops){
   });
   queueSave(); render();
 }
-let pendingOps=null;
+let pendingOps=null, convo=[];
 const aiStatus=$("#ai-status"), aiInput=$("#ai-input"), aiGo=$("#ai-go"), aiov=$("#aiov");
-function setStatus(t,err){aiStatus.textContent=t||"";aiStatus.className="ai-status"+(err?" err":"");}
+function setS(el,t,err){if(el){el.textContent=t||"";el.className="ai-status"+(err?" err":"");}}
+function buildInstruction(){
+  return "You are refining training-plan changes through a short back-and-forth with the user. "
+    + "Consider the ENTIRE conversation below and return the COMPLETE set of changes needed from the "
+    + "current plan to satisfy the user's latest intent — not just the most recent delta. "
+    + "If a refinement replaces an earlier idea, drop the earlier one.\n\n" + convo.join("\n");
+}
+async function callPlan(statusEl){
+  setS(statusEl,"Thinking…");
+  const r=await fetch(CFG.SUPABASE_URL+"/functions/v1/nlplan",{
+    method:"POST",
+    headers:{"content-type":"application/json",apikey:CFG.SUPABASE_ANON_KEY,Authorization:"Bearer "+CFG.SUPABASE_ANON_KEY},
+    body:JSON.stringify({instruction:buildInstruction(),plan:planPayload()})});
+  const d=await r.json();
+  if(!r.ok||d.error)throw new Error(d.error||("HTTP "+r.status));
+  return d;
+}
+function renderProposal(d){
+  pendingOps=d.ops||[];
+  $("#ai-sum").textContent=d.summary||"";
+  $("#ai-ops").innerHTML=pendingOps.length?pendingOps.map(o=>`<div class="oprow">${opText(o)}</div>`).join(""):'<div class="oprow">No changes.</div>';
+  convo.push("Assistant proposed: "+(d.summary||"")+" | ops="+JSON.stringify(pendingOps));
+}
 async function aiSuggest(){
-  const instruction=aiInput.value.trim();
-  if(!instruction)return;
-  aiGo.disabled=true; setStatus("Thinking…");
-  try{
-    const r=await fetch(CFG.SUPABASE_URL+"/functions/v1/nlplan",{
-      method:"POST",
-      headers:{"content-type":"application/json",apikey:CFG.SUPABASE_ANON_KEY,Authorization:"Bearer "+CFG.SUPABASE_ANON_KEY},
-      body:JSON.stringify({instruction,plan:planPayload()})});
-    const d=await r.json();
-    if(!r.ok||d.error)throw new Error(d.error||("HTTP "+r.status));
-    if(!d.ops||!d.ops.length){setStatus(d.summary||"No changes suggested.");return;}
-    pendingOps=d.ops;
-    $("#ai-sum").textContent=d.summary||"";
-    $("#ai-ops").innerHTML=d.ops.map(o=>`<div class="oprow">${opText(o)}</div>`).join("");
-    aiov.classList.add("show");
-    setStatus("");
-  }catch(e){setStatus("Couldn't get suggestions: "+e.message,true);}
+  const instruction=aiInput.value.trim(); if(!instruction)return;
+  convo=["User: "+instruction]; aiGo.disabled=true;
+  try{const d=await callPlan(aiStatus);renderProposal(d);aiov.classList.add("show");setS(aiStatus,"");}
+  catch(e){setS(aiStatus,"Couldn't get suggestions: "+e.message,true);}
   finally{aiGo.disabled=false;}
 }
-function aiClose(){aiov.classList.remove("show");pendingOps=null;}
-if(AI_ON){
-  aiGo.addEventListener("click",aiSuggest);
-  aiInput.addEventListener("keydown",e=>{if(e.key==="Enter")aiSuggest();});
-  $("#ai-apply").addEventListener("click",()=>{if(pendingOps)applyOps(pendingOps);aiInput.value="";aiClose();setStatus("Changes applied.");});
-  $("#ai-cancel").addEventListener("click",aiClose);
-  aiov.addEventListener("click",e=>{if(e.target===aiov)aiClose();});
-  // dictation via Web Speech API
-  const mic=$("#ai-mic"); let recog=null,recording=false;
+async function aiRefine(){
+  const f=$("#ai-followup").value.trim(); if(!f)return;
+  convo.push("User refinement: "+f);
+  const btn=$("#ai-refine"); btn.disabled=true;
+  try{const d=await callPlan($("#ai-status2"));renderProposal(d);$("#ai-followup").value="";setS($("#ai-status2"),"");}
+  catch(e){setS($("#ai-status2"),"Couldn't refine: "+e.message,true);}
+  finally{btn.disabled=false;}
+}
+function aiClose(){aiov.classList.remove("show");pendingOps=null;convo=[];$("#ai-followup").value="";setS($("#ai-status2"),"");}
+function wireDictation(input,mic,statusEl){
+  let recog=null,recording=false;
   mic.addEventListener("click",()=>{
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-    if(!SR){setStatus("Voice input isn't supported in this browser — type instead.",true);return;}
+    if(!SR){setS(statusEl,"Voice input isn't supported here — type instead.",true);return;}
     if(recording&&recog){recog.stop();return;}
     recog=new SR();recog.lang="en-AU";recog.interimResults=true;recog.continuous=false;
-    const base=aiInput.value?aiInput.value.trim()+" ":"";
-    recog.onresult=e=>{let t="";for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;aiInput.value=base+t;};
+    const base=input.value?input.value.trim()+" ":"";
+    recog.onresult=e=>{let t="";for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;input.value=base+t;};
     recog.onend=()=>{recording=false;mic.classList.remove("rec");};
     recog.onerror=()=>{recording=false;mic.classList.remove("rec");};
     recording=true;mic.classList.add("rec");recog.start();
   });
+}
+if(AI_ON){
+  aiGo.addEventListener("click",aiSuggest);
+  aiInput.addEventListener("keydown",e=>{if(e.key==="Enter")aiSuggest();});
+  $("#ai-refine").addEventListener("click",aiRefine);
+  $("#ai-followup").addEventListener("keydown",e=>{if(e.key==="Enter")aiRefine();});
+  $("#ai-apply").addEventListener("click",()=>{if(pendingOps&&pendingOps.length)applyOps(pendingOps);aiInput.value="";aiClose();setS(aiStatus,"Changes applied.");});
+  $("#ai-cancel").addEventListener("click",aiClose);
+  aiov.addEventListener("click",e=>{if(e.target===aiov)aiClose();});
+  wireDictation(aiInput,$("#ai-mic"),aiStatus);
+  wireDictation($("#ai-followup"),$("#ai-mic2"),$("#ai-status2"));
 }
 
 /* ---------- boot ---------- */
