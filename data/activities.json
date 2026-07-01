@@ -5,7 +5,8 @@
       "type": "Ride",
       "note": "2.9 km ride",
       "done": true,
-      "sport": "ride"
+      "sport": "ride",
+      "id": "18890199754"
     }
   ],
   "2026-06-12": [
@@ -14,7 +15,8 @@
       "type": "Easy",
       "note": "5:59/km",
       "done": true,
-      "sport": "run"
+      "sport": "run",
+      "id": "18888683071"
     }
   ],
   "2026-06-13": [
@@ -23,7 +25,8 @@
       "type": "Ride",
       "note": "5.6 km ride",
       "done": true,
-      "sport": "ride"
+      "sport": "ride",
+      "id": "18896686581"
     }
   ],
   "2026-06-14": [
@@ -32,21 +35,24 @@
       "type": "Swim",
       "note": "1.8 km",
       "done": true,
-      "sport": "other"
+      "sport": "other",
+      "id": "18911074210"
     },
     {
       "km": 91.0,
       "type": "Ride",
       "note": "91.0 km ride",
       "done": true,
-      "sport": "ride"
+      "sport": "ride",
+      "id": "18916679543"
     },
     {
       "km": 21.1,
       "type": "Long",
       "note": "5:35/km",
       "done": true,
-      "sport": "run"
+      "sport": "run",
+      "id": "18911077136"
     }
   ],
   "2026-06-17": [
@@ -55,7 +61,8 @@
       "type": "Ride",
       "note": "18.7 km ride",
       "done": true,
-      "sport": "ride"
+      "sport": "ride",
+      "id": "18950216209"
     }
   ],
   "2026-06-18": [
@@ -64,7 +71,8 @@
       "type": "Easy",
       "note": "6:12/km",
       "done": true,
-      "sport": "run"
+      "sport": "run",
+      "id": "18968332724"
     }
   ],
   "2026-06-21": [
@@ -73,7 +81,8 @@
       "type": "Easy",
       "note": "6:05/km",
       "done": true,
-      "sport": "run"
+      "sport": "run",
+      "id": "19004422999"
     }
   ],
   "2026-06-24": [
@@ -82,7 +91,8 @@
       "type": "Intervals",
       "note": "6\u00d7401 m @ 3:55/km",
       "done": true,
-      "sport": "run"
+      "sport": "run",
+      "id": "19044107045"
     }
   ],
   "2026-06-25": [
@@ -91,7 +101,8 @@
       "type": "Easy",
       "note": "6:03/km",
       "done": true,
-      "sport": "run"
+      "sport": "run",
+      "id": "19055016574"
     }
   ],
   "2026-06-27": [
@@ -100,7 +111,8 @@
       "type": "Threshold",
       "note": "6.0 km continuous @ 4:36/km",
       "done": true,
-      "sport": "run"
+      "sport": "run",
+      "id": "19081088275"
     }
   ],
   "2026-06-28": [
@@ -109,7 +121,8 @@
       "type": "Long",
       "note": "6:02/km",
       "done": true,
-      "sport": "run"
+      "sport": "run",
+      "id": "19096869758"
     }
   ],
   "2026-06-30": [
@@ -118,14 +131,16 @@
       "type": "Intervals",
       "note": "5\u00d7800 m @ 4:32/km",
       "done": true,
-      "sport": "run"
+      "sport": "run",
+      "id": "19116224934"
     },
     {
       "km": null,
       "type": "Strength",
       "note": "40 min",
       "done": true,
-      "sport": "strength"
+      "sport": "strength",
+      "id": "19120939114"
     }
   ],
   "2026-07-01": [
@@ -134,8 +149,9 @@
       "type": "Threshold",
       "note": "6.0 km continuous @ 4:47/km",
       "done": true,
-      "sport": "run"
+      "sport": "run",
+      "id": "19132261543"
     }
   ],
-  "_synced_at": "2026-07-01T03:51:10Z"
+  "_synced_at": "2026-07-01T04:29:40Z"
 }
