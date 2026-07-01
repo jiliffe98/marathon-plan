@@ -86,19 +86,22 @@ def categorise(act, laps):
         if fast:
             reps_short = [l for l in fast if l["distance"] < REP_MAX_M]
             reps_long  = [l for l in fast if l["distance"] >= REP_MAX_M]
-            # threshold = a single sustained long effort
+            # threshold = a single sustained long effort  ->  "6km @ 4:48"
             if reps_long and len(reps_short) < MIN_REPS:
                 L = max(reps_long, key=lambda l: l["distance"])
                 p = pace_per_km(L["distance"], L["moving_time"])
-                return "Threshold", f"{L['distance']/1000:.1f} km continuous @ {mmss(p)}/km"
-            # intervals = several short reps
+                km_txt = f"{L['distance']/1000:.1f}".rstrip("0").rstrip(".")
+                return "Threshold", f"{km_txt}km @ {mmss(p)}"
+            # intervals = several short reps  ->  "5x400m @3:45-4:05"
             if len(reps_short) >= MIN_REPS:
                 d = reps_short[0]["distance"]
                 same = [l for l in reps_short if abs(l["distance"] - d) <= 100]
-                rep_m = round(sum(l["distance"] for l in same) / len(same))
-                p = sum(pace_per_km(l["distance"], l["moving_time"]) for l in same) / len(same)
-                label_m = f"{rep_m} m" if rep_m < 1000 else f"{rep_m/1000:.1f} km"
-                return "Intervals", f"{len(same)}×{label_m} @ {mmss(p)}/km"
+                rep_m = round(sum(l["distance"] for l in same) / len(same) / 100) * 100
+                label = f"{rep_m}m" if rep_m < 1000 else f"{rep_m/1000:.1f}".rstrip("0").rstrip(".") + "km"
+                rep_paces = [pace_per_km(l["distance"], l["moving_time"]) for l in same]
+                fast_p, slow_p = min(rep_paces), max(rep_paces)
+                rng = mmss(fast_p) if (slow_p - fast_p) < 3 else f"{mmss(fast_p)}-{mmss(slow_p)}"
+                return "Intervals", f"{len(same)}x{label} @{rng}"
 
     return "Easy", note
 
