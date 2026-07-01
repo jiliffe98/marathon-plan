@@ -1,13 +1,6 @@
 {
   "2026-06-10": [
     {
-      "km": 31.0,
-      "type": "Ride",
-      "note": "31.0 km ride",
-      "done": true,
-      "sport": "ride"
-    },
-    {
       "km": 2.9,
       "type": "Ride",
       "note": "2.9 km ride",
@@ -135,5 +128,5 @@
       "sport": "strength"
     }
   ],
-  "_synced_at": "2026-06-30T12:43:16Z"
+  "_synced_at": "2026-07-01T00:09:09Z"
 }
