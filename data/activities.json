@@ -89,7 +89,7 @@
     {
       "km": 6.5,
       "type": "Intervals",
-      "note": "6\u00d7401 m @ 3:55/km",
+      "note": "6x400m @3:48-4:10",
       "done": true,
       "sport": "run",
       "id": "19044107045"
@@ -109,7 +109,7 @@
     {
       "km": 6.7,
       "type": "Threshold",
-      "note": "6.0 km continuous @ 4:36/km",
+      "note": "6km @ 4:36",
       "done": true,
       "sport": "run",
       "id": "19081088275"
@@ -129,7 +129,7 @@
     {
       "km": 7.8,
       "type": "Intervals",
-      "note": "5\u00d7800 m @ 4:32/km",
+      "note": "5x800m @4:15-4:54",
       "done": true,
       "sport": "run",
       "id": "19116224934"
@@ -147,11 +147,11 @@
     {
       "km": 9.6,
       "type": "Threshold",
-      "note": "6.0 km continuous @ 4:47/km",
+      "note": "6km @ 4:47",
       "done": true,
       "sport": "run",
       "id": "19132261543"
     }
   ],
-  "_synced_at": "2026-07-01T04:29:40Z"
+  "_synced_at": "2026-07-01T04:33:53Z"
 }
