@@ -126,6 +126,8 @@
   .chipdetail b{font-weight:800;margin-right:3px}
   .chipdetail .src{display:inline-block;margin-left:5px;font-size:9px;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:#fc5200;border-radius:4px;padding:1px 4px;vertical-align:middle}
   .chipdetail .src.manual{background:var(--harbour)}
+  .chipdetail .notebtn{display:inline-block;margin-top:7px;font:inherit;font-size:11px;font-weight:700;color:var(--harbour);background:#fff;border:1px solid var(--line);border-radius:6px;padding:3px 9px;cursor:pointer}
+  .chipdetail .notebtn:hover{border-color:var(--harbour)}
 
   .ov{position:fixed;inset:0;background:rgba(20,28,40,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
   .ov.show{display:flex}
@@ -417,6 +419,7 @@ function render(){
           h+=`<div class="dl">${typeof act.km==="number"?`<span class="km">${fmt(act.km)} km</span> `:""}${act.atype||act.type||""}${tag}${act.note?`<div class="dn">${act.note}</div>`:""}</div>`;
         }
         if(withNote&&note)h+=`<div class="dl"><b>Note</b> ${note}</div>`;
+        h+=`<button class="notebtn" data-noteiso="${iso}">${note?'✎ Edit note':'✎ Add note'}</button>`;
         return h;
       };
       const chips=planned.map((p,ai)=>({p,ai}))
@@ -440,7 +443,7 @@ function render(){
       // note with nowhere to attach
       let extraNote="";
       if(note&&noteChip<0)
-        extraNote=`<div class="chip c-grey done-chip note-only extra"><div class="chiprow"><span>Note</span><span class="tick note-ind">✎</span></div><div class="chipdetail"><div class="dl">${note}</div></div></div>`;
+        extraNote=`<div class="chip c-grey done-chip note-only extra"><div class="chiprow"><span>Note</span><span class="tick note-ind">✎</span></div><div class="chipdetail">${detailHTML(null,true)}</div></div>`;
       return `<div class="${cls.join(' ')}" data-iso="${iso}" data-wi="${wi}"><div class="dhead"><span class="dname">${DNAMES[di]}</span><span class="dnum">${dispDate(iso)}</span></div><div class="chips">${chips}${extra}${extraNote}</div></div>`;
     }).join("");
     const noneWk=w.kind==="none";   // unplanned week: actual == target so bars read full
@@ -481,6 +484,8 @@ host.addEventListener("drop",e=>{const d=e.target.closest(".day");if(!d)return;e
 let editing=null,workPlanned=null;
 const ov=$("#ov");
 host.addEventListener("click",e=>{
+  const nb=e.target.closest(".notebtn");
+  if(nb){e.stopPropagation();const iso=nb.dataset.noteiso;openEditor(wiForIso(iso),iso);setTimeout(()=>{const t=$("#m-note");if(t){t.focus();}},60);return;}
   const dc=e.target.closest(".chip.done-chip");
   if(dc){e.stopPropagation();const dd=dc.querySelector(".chipdetail");if(dd)dd.classList.toggle("show");return;}
   if(e.target.closest(".chip"))return;
