@@ -155,6 +155,7 @@ def main():
             entry = {"km": km, "type": a.get("sport_type") or "Activity", "note": f"{km} km",
                      "done": True, "sport": "other"}
             print(f"  {date}  Other      {km:>5} km")
+        entry["id"] = str(a.get("id", ""))   # stable Strava id — keys per-activity notes
         fresh.setdefault(date, []).append(entry)
 
     data.update(fresh)

@@ -128,6 +128,7 @@
   .chipdetail .src.manual{background:var(--harbour)}
   .chipdetail .notebtn{display:inline-block;margin-top:7px;font:inherit;font-size:11px;font-weight:700;color:var(--harbour);background:#fff;border:1px solid var(--line);border-radius:6px;padding:3px 9px;cursor:pointer}
   .chipdetail .notebtn:hover{border-color:var(--harbour)}
+  .chipdetail .usernote{color:var(--harbour)}
 
   .ov{position:fixed;inset:0;background:rgba(20,28,40,.45);display:none;align-items:center;justify-content:center;padding:16px;z-index:50}
   .ov.show{display:flex}
@@ -218,6 +219,20 @@
   </div>
 </div>
 
+<div class="ov" id="noteov">
+  <div class="modal" role="dialog" aria-modal="true">
+    <div class="m-head"><h3>Note</h3><p id="note-label"></p></div>
+    <div class="m-body">
+      <div class="fld"><textarea id="note-input" placeholder="How it felt, splits, conditions, effort…"></textarea></div>
+    </div>
+    <div class="m-foot">
+      <button class="btn ghost grow" id="note-clear">Delete</button>
+      <button class="btn" id="note-cancel">Cancel</button>
+      <button class="btn primary" id="note-save">Save</button>
+    </div>
+  </div>
+</div>
+
 <div class="ov" id="ov">
   <div class="modal" role="dialog" aria-modal="true">
     <div class="m-head"><h3 id="m-title">Day</h3><p id="m-date"></p></div>
@@ -239,10 +254,6 @@
           <div><input type="number" id="m-km" placeholder="Distance (km)" step="0.1" min="0"></div>
           <div><input type="text" id="m-atype" placeholder="Type (e.g. Intervals)"></div>
         </div>
-      </div>
-      <div class="fld">
-        <label class="cap">Note</label>
-        <textarea id="m-note" placeholder="How it felt, route, anything…"></textarea>
       </div>
     </div>
     <div class="m-foot">
@@ -337,9 +348,9 @@ function dayIdx(wi,iso){return isoSeq(PLAN[wi].start).indexOf(iso);}
 function plannedFor(wi,iso){return USER.planned[iso] || defaultPlanned(PLAN[wi])[dayIdx(wi,iso)];}
 function autoArr(iso){const a=ACTIVITIES[iso];return a?(Array.isArray(a)?a:[a]):[];}
 function dayActuals(iso){
-  const out=autoArr(iso).map(x=>Object.assign({},x,{fromStrava:true}));
+  const out=autoArr(iso).map((x,i)=>Object.assign({},x,{fromStrava:true,_key:"a:"+(x.id!=null&&x.id!==""?x.id:iso+":"+i)}));
   const u=USER.actuals[iso];
-  if(u&&(u.done||typeof u.km==="number"||(u.atype&&u.atype.length))) out.push(Object.assign({},u,{fromStrava:false}));
+  if(u&&(u.done||typeof u.km==="number"||(u.atype&&u.atype.length))) out.push(Object.assign({},u,{fromStrava:false,_key:"m:"+iso}));
   return out;
 }
 function actRunKm(a){return actCategory(a)==="run"&&typeof a.km==="number"?a.km:0;}
@@ -390,7 +401,6 @@ function render(){
     const c=weekCounts(wi,isos);
     const days=isos.map((iso,di)=>{
       const planned=plannedFor(wi,iso);
-      const note=USER.notes[iso];
       const acts=dayActuals(iso);
       const isPastDay=iso<ti;
       // assign each actual to a planned chip — exact type first, then same category
@@ -402,24 +412,16 @@ function render(){
       });
       pass(true); pass(false);
       const extraActs=acts.filter((_,idx)=>!used.has(idx));
-      // where the day note attaches: first assigned chip, else a run chip, else its own chip
-      let noteChip=-1;
-      if(note){
-        const a0=Object.keys(assign).map(Number).sort((x,y)=>x-y);
-        if(a0.length)noteChip=a0[0];
-        else{noteChip=planned.findIndex(p=>chipCategory(p)==="run");if(noteChip<0)noteChip=planned.findIndex(p=>chipCategory(p)!=="other");}
-      }
       const cls=["day"];
       if(iso===ti)cls.push("today");
       if(planned.some(p=>p.race))cls.push("race");
-      const detailHTML=(act,withNote)=>{
-        let h="";
-        if(act){
-          const tag=act.fromStrava?'<span class="src">Strava</span>':(act.done?'<span class="src manual">Logged</span>':"");
-          h+=`<div class="dl">${typeof act.km==="number"?`<span class="km">${fmt(act.km)} km</span> `:""}${act.atype||act.type||""}${tag}${act.note?`<div class="dn">${act.note}</div>`:""}</div>`;
-        }
-        if(withNote&&note)h+=`<div class="dl"><b>Note</b> ${note}</div>`;
-        h+=`<button class="notebtn" data-noteiso="${iso}">${note?'✎ Edit note':'✎ Add note'}</button>`;
+      const esc=s=>(s||"").replace(/"/g,"&quot;");
+      const detailHTML=(act)=>{  // per-activity detail + its own user note + add/edit button
+        const tag=act.fromStrava?'<span class="src">Strava</span>':(act.done?'<span class="src manual">Logged</span>':"");
+        let h=`<div class="dl">${typeof act.km==="number"?`<span class="km">${fmt(act.km)} km</span> `:""}${act.atype||act.type||""}${tag}${act.note?`<div class="dn">${act.note}</div>`:""}</div>`;
+        const un=USER.actNotes[act._key];
+        if(un)h+=`<div class="dl usernote"><b>Note</b> ${un}</div>`;
+        h+=`<button class="notebtn" data-notekey="${act._key}" data-notelabel="${esc((act.atype||act.type||'Activity')+' · '+dispDate(iso))}">${un?'✎ Edit note':'✎ Add note'}</button>`;
         return h;
       };
       const chips=planned.map((p,ai)=>({p,ai}))
@@ -427,24 +429,23 @@ function render(){
         .map(({p,ai})=>{
         const cat2=chipCategory(p);
         const km=p.km!=null?`<span class="km">${p.km}k</span>`:"";
-        const act=assign[ai], hasNote=(ai===noteChip), done=!!act;
+        const act=assign[ai], done=!!act;
         let color="c-grey";
         if(cat2==="run")color=done?"c-green":(isPastDay?"c-red":"c-blue");
-        if(!done&&!hasNote)
+        if(!done)
           return `<div class="chip ${color}" draggable="true" data-loc="${iso}|${ai}"><span>${p.a}</span>${km}</div>`;
-        const ind=done?`<span class="tick">${CHECK}</span>`:`<span class="tick note-ind">✎</span>`;
-        return `<div class="chip ${color} done-chip${done?'':' note-only'}" draggable="true" data-loc="${iso}|${ai}"><div class="chiprow"><span>${p.a}</span>${km}${ind}</div><div class="chipdetail">${detailHTML(act,hasNote)}</div></div>`;
+        return `<div class="chip ${color} done-chip" draggable="true" data-loc="${iso}|${ai}"><div class="chiprow"><span>${p.a}</span>${km}<span class="tick">${CHECK}</span></div><div class="chipdetail">${detailHTML(act)}</div></div>`;
       }).join("");
       // activities with no matching planned slot: fixed chips, can't be dragged (Strava keeps its date)
       const extra=extraActs.map(act=>{
         const ccolor=actCategory(act)==="run"?"c-green":"c-grey";
-        return `<div class="chip ${ccolor} done-chip extra"><div class="chiprow"><span>${act.atype||act.type||"Done"}</span><span class="tick">${CHECK}</span></div><div class="chipdetail">${detailHTML(act,false)}</div></div>`;
+        return `<div class="chip ${ccolor} done-chip extra"><div class="chiprow"><span>${act.atype||act.type||"Done"}</span><span class="tick">${CHECK}</span></div><div class="chipdetail">${detailHTML(act)}</div></div>`;
       }).join("");
-      // note with nowhere to attach
-      let extraNote="";
-      if(note&&noteChip<0)
-        extraNote=`<div class="chip c-grey done-chip note-only extra"><div class="chiprow"><span>Note</span><span class="tick note-ind">✎</span></div><div class="chipdetail">${detailHTML(null,true)}</div></div>`;
-      return `<div class="${cls.join(' ')}" data-iso="${iso}" data-wi="${wi}"><div class="dhead"><span class="dname">${DNAMES[di]}</span><span class="dnum">${dispDate(iso)}</span></div><div class="chips">${chips}${extra}${extraNote}</div></div>`;
+      // day-level note (legacy / rest-day) not tied to a specific activity
+      let dayNoteChip="";
+      const dn=USER.actNotes["d:"+iso];
+      if(dn)dayNoteChip=`<div class="chip c-grey done-chip note-only extra"><div class="chiprow"><span>Day note</span><span class="tick note-ind">✎</span></div><div class="chipdetail"><div class="dl usernote">${dn}</div><button class="notebtn" data-notekey="d:${iso}" data-notelabel="${esc('Day note · '+dispDate(iso))}">✎ Edit note</button></div></div>`;
+      return `<div class="${cls.join(' ')}" data-iso="${iso}" data-wi="${wi}"><div class="dhead"><span class="dname">${DNAMES[di]}</span><span class="dnum">${dispDate(iso)}</span></div><div class="chips">${chips}${extra}${dayNoteChip}</div></div>`;
     }).join("");
     const noneWk=w.kind==="none";   // unplanned week: actual == target so bars read full
     const headInner=`<span class="wk-no">WEEK ${w.no}</span><span class="wk-range">${w.range}</span>${w.tag?`<span class="wk-tag">· ${w.tag}</span>`:""}<div class="wk-vol">${volBar(vol,noneWk?vol:w.total)}${actBlock(c.done,c.planned)}${longBlock(lng,noneWk?lng:w.long)}</div>`;
@@ -485,7 +486,7 @@ let editing=null,workPlanned=null;
 const ov=$("#ov");
 host.addEventListener("click",e=>{
   const nb=e.target.closest(".notebtn");
-  if(nb){e.stopPropagation();const iso=nb.dataset.noteiso;openEditor(wiForIso(iso),iso);setTimeout(()=>{const t=$("#m-note");if(t){t.focus();}},60);return;}
+  if(nb){e.stopPropagation();openNote(nb.dataset.notekey,nb.dataset.notelabel);return;}
   const dc=e.target.closest(".chip.done-chip");
   if(dc){e.stopPropagation();const dd=dc.querySelector(".chipdetail");if(dd)dd.classList.toggle("show");return;}
   if(e.target.closest(".chip"))return;
@@ -501,7 +502,6 @@ function openEditor(wi,iso){
   $("#m-done").checked=!!a.done;
   $("#m-km").value=(typeof a.km==="number")?a.km:"";
   $("#m-atype").value=a.atype||a.type||"";
-  $("#m-note").value=USER.notes[iso]||"";
   renderPlanned();renderMove(wi,iso);ov.classList.add("show");
 }
 function renderPlanned(){
@@ -530,10 +530,19 @@ $("#m-save").addEventListener("click",()=>{
   const done=$("#m-done").checked,at=$("#m-atype").value.trim();
   if(done||!isNaN(k)||at){USER.actuals[iso]={done,km:isNaN(k)?null:k,atype:at};}
   else{delete USER.actuals[iso];}
-  const note=$("#m-note").value.trim(); if(note)USER.notes[iso]=note; else delete USER.notes[iso];
   queueSave();close();render();
 });
-$("#m-clear").addEventListener("click",()=>{const{iso}=editing;delete USER.actuals[iso];delete USER.notes[iso];queueSave();close();render();});
+$("#m-clear").addEventListener("click",()=>{const{iso}=editing;delete USER.actuals[iso];queueSave();close();render();});
+
+/* ---------- per-activity note editor ---------- */
+let noteKey=null;
+const noteov=$("#noteov");
+function openNote(key,label){noteKey=key;$("#note-label").textContent=label||"";$("#note-input").value=(USER.actNotes&&USER.actNotes[key])||"";noteov.classList.add("show");setTimeout(()=>$("#note-input").focus(),50);}
+function noteClose(){noteov.classList.remove("show");noteKey=null;}
+$("#note-save").addEventListener("click",()=>{USER.actNotes=USER.actNotes||{};const t=$("#note-input").value.trim();if(t)USER.actNotes[noteKey]=t;else delete USER.actNotes[noteKey];queueSave();noteClose();render();});
+$("#note-clear").addEventListener("click",()=>{if(USER.actNotes)delete USER.actNotes[noteKey];queueSave();noteClose();render();});
+$("#note-cancel").addEventListener("click",noteClose);
+noteov.addEventListener("click",e=>{if(e.target===noteov)noteClose();});
 $("#m-cancel").addEventListener("click",close);
 ov.addEventListener("click",e=>{if(e.target===ov)close();});
 function close(){ov.classList.remove("show");editing=null;}
@@ -568,7 +577,7 @@ function opText(o){
 }
 function applyOps(ops){
   ops.forEach(o=>{
-    if(o.op==="note"){ if(o.text)USER.notes[o.date]=o.text; else delete USER.notes[o.date]; return; }
+    if(o.op==="note"){ USER.actNotes=USER.actNotes||{}; if(o.text)USER.actNotes["d:"+o.date]=o.text; else delete USER.actNotes["d:"+o.date]; return; }
     const wi=wiForIso(o.date); if(wi<0)return;
     const dst=plannedFor(wi,o.date).slice();
     if(o.op==="move"){
@@ -706,7 +715,11 @@ async function boot(){
   pill.className="syncpill "+(SB?"ok":"local");
   if(AI_ON)$("#aibar").classList.add("on");
   try{const r=await fetch("data/activities.json?ts="+Date.now());if(r.ok)ACTIVITIES=await r.json();}catch(e){console.warn("no activities.json yet",e);}
-  USER=await loadUser(); USER.planned=USER.planned||{};USER.actuals=USER.actuals||{};USER.notes=USER.notes||{};
+  USER=await loadUser(); USER.planned=USER.planned||{};USER.actuals=USER.actuals||{};USER.notes=USER.notes||{};USER.actNotes=USER.actNotes||{};
+  // migrate any legacy day-level notes into the activity-notes map (as day-level keys)
+  let migrated=false;
+  for(const iso in USER.notes){if(USER.notes[iso]&&!USER.actNotes["d:"+iso]){USER.actNotes["d:"+iso]=USER.notes[iso];migrated=true;}}
+  if(migrated||Object.keys(USER.notes).length){USER.notes={};queueSave();}
   render(); setLastSync();
 }
 boot();
