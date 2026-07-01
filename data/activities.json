@@ -128,5 +128,14 @@
       "sport": "strength"
     }
   ],
-  "_synced_at": "2026-07-01T00:09:09Z"
+  "2026-07-01": [
+    {
+      "km": 9.6,
+      "type": "Threshold",
+      "note": "6.0 km continuous @ 4:47/km",
+      "done": true,
+      "sport": "run"
+    }
+  ],
+  "_synced_at": "2026-07-01T03:51:10Z"
 }
