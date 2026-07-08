@@ -20,7 +20,8 @@ import os, json, sys, datetime, pathlib, urllib.parse, urllib.request
 LONG_RUN_KM      = 18.0     # >= this, paced easy -> "Long"
 REP_MAX_M        = 2000     # a "rep" shorter than this -> intervals; longer -> threshold
 MIN_REPS         = 3        # need at least this many fast reps to call it intervals
-EASY_MARGIN      = 0.93     # a lap is "work" if its pace <= this * the run's easy (slowest) pace
+INTERVAL_GAP     = 40       # s/km gap between rep pace and recovery pace to call it intervals
+THRESH_MARGIN    = 25       # a >=2km block is "threshold" if this many s/km faster than easy laps
 DAYS_BACK        = 21       # how far back to look each run
 # -----------------------------------------------------------------------------
 
@@ -81,50 +82,37 @@ def categorise(act, laps):
     if len(work) < 2:
         return "Easy", note
 
-    def p(l):
+    def pc(l):
         return pace_per_km(l["distance"], l["moving_time"])
 
-    # Baseline = the easy/recovery pace (slowest laps), NOT the median — so a
-    # tempo block that dominates the run is still recognised as "work".
-    easy_ref = max(p(l) for l in work)
-    fast_cut = easy_ref * EASY_MARGIN            # a lap is "work" if this much faster than easy
-    flag = [p(l) <= fast_cut for l in work]
+    paces = [pc(l) for l in work]
 
-    # group consecutive work laps into segments (reps / blocks)
-    segs, i = [], 0
-    while i < len(work):
-        if flag[i]:
-            j = i
-            while j < len(work) and flag[j]:
-                j += 1
-            grp = work[i:j]
-            d = sum(l["distance"] for l in grp)
-            t = sum(l["moving_time"] for l in grp)
-            ps = [p(l) for l in grp]
-            segs.append({"dist": d, "pace": t / (d / 1000.0), "fast": min(ps), "slow": max(ps)})
-            i = j
-        else:
-            i += 1
-    if not segs:
-        return "Easy", note
+    # INTERVALS: reps separated from recovery by a clear pace gap  ->  "6x400m @3:48-4:10"
+    sp = sorted(paces)
+    gi, gap = -1, 0
+    for i in range(len(sp) - 1):
+        if sp[i + 1] - sp[i] > gap:
+            gap, gi = sp[i + 1] - sp[i], i
+    if gap >= INTERVAL_GAP:
+        cut = sp[gi]
+        fast = [l for l in work if pc(l) <= cut + 1]
+        rest = len(work) - len(fast)
+        if len(fast) >= MIN_REPS and all(l["distance"] < REP_MAX_M for l in fast) and rest >= len(fast) - 1:
+            rep_m = round(sum(l["distance"] for l in fast) / len(fast) / 100) * 100
+            label = f"{rep_m}m" if rep_m < 1000 else f"{rep_m/1000:.1f}".rstrip("0").rstrip(".") + "km"
+            fps = [pc(l) for l in fast]
+            fp, spx = min(fps), max(fps)
+            rng = mmss(fp) if (spx - fp) < 3 else f"{mmss(fp)}-{mmss(spx)}"
+            return "Intervals", f"{len(fast)}x{label} @{rng}"
 
-    short = [s for s in segs if s["dist"] < REP_MAX_M]     # each rep < 2 km
-    longs = [s for s in segs if s["dist"] >= REP_MAX_M]    # sustained block(s) >= 2 km
-
-    # INTERVALS: several short reps  ->  "5x400m @3:45-4:05"
-    if len(short) >= MIN_REPS and not longs:
-        rep_m = round(sum(s["dist"] for s in short) / len(short) / 100) * 100
-        label = f"{rep_m}m" if rep_m < 1000 else f"{rep_m/1000:.1f}".rstrip("0").rstrip(".") + "km"
-        fp = min(s["fast"] for s in short)
-        sp = max(s["slow"] for s in short)
-        rng = mmss(fp) if (sp - fp) < 3 else f"{mmss(fp)}-{mmss(sp)}"
-        return "Intervals", f"{len(short)}x{label} @{rng}"
-
-    # THRESHOLD: a sustained block  ->  "6km @ 4:55"
-    if longs:
-        L = max(longs, key=lambda s: s["dist"])
-        km_txt = f"{L['dist']/1000:.1f}".rstrip("0").rstrip(".")
-        return "Threshold", f"{km_txt}km @ {mmss(L['pace'])}"
+    # THRESHOLD: a sustained >=2km block clearly faster than the easy laps  ->  "6km @ 4:55"
+    bigs = [l for l in work if l["distance"] >= REP_MAX_M]
+    if bigs:
+        L = max(bigs, key=lambda l: l["distance"])
+        others = [pc(l) for l in work if l is not L]
+        if others and (max(others) - pc(L)) >= THRESH_MARGIN:
+            km_txt = f"{L['distance']/1000:.1f}".rstrip("0").rstrip(".")
+            return "Threshold", f"{km_txt}km @ {mmss(pc(L))}"
 
     return "Easy", note
 
