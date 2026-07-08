@@ -48,6 +48,12 @@ Deno.serve(async (req) => {
       "- Only include changes the user actually asked for. Resolve relative dates (e.g. 'this Friday', " +
       "'next Sunday's long run') against the weekday/week info in the plan. If a request is impossible " +
       "(date not in plan), skip it and say so in the summary.\n" +
+      "- To locate a named session (e.g. 'the long run') in a target week, SCAN that week's days and pick " +
+      "the exact day whose sessions already include that name. A long run may be on Saturday OR Sunday " +
+      "depending on the week — NEVER assume a weekday, and never fall back to a different week.\n" +
+      "- To change an existing session's distance, emit exactly ONE 'setkm' op on the day that already " +
+      "contains it. Do NOT remove-and-re-add it, do NOT move it to another day, and do NOT touch other " +
+      "sessions on that day. Only use 'add' when the target week has no session of that type at all.\n" +
       "- `summary`: one or two plain-English sentences describing the COMPLETE set of proposed changes (the cumulative result).\n" +
       "- `reply`: one short, friendly sentence addressed to the user's MOST RECENT message specifically — " +
       "acknowledging what you just changed in response to it (or asking for clarification if it was unclear).";
@@ -80,35 +86,66 @@ Deno.serve(async (req) => {
       },
     };
 
-    const resp = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "x-api-key": key,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 1024,
-        system,
-        tools: [tool],
-        tool_choice: { type: "tool", name: "propose_changes" },
-        messages: [
-          {
-            role: "user",
-            content:
-              "Current plan:\n" + JSON.stringify(plan) +
-              "\n\nRequested change:\n" + instruction,
-          },
-        ],
-      }),
+    const anthropicBody = JSON.stringify({
+      model: MODEL,
+      max_tokens: 1024,
+      system,
+      tools: [tool],
+      tool_choice: { type: "tool", name: "propose_changes" },
+      messages: [
+        {
+          role: "user",
+          content:
+            "Current plan:\n" + JSON.stringify(plan) +
+            "\n\nRequested change:\n" + instruction,
+        },
+      ],
     });
 
-    const data = await resp.json();
-    if (!resp.ok) return json({ error: data?.error?.message || "Anthropic error" }, 502);
-    const block = (data.content || []).find((b: { type: string }) => b.type === "tool_use");
-    if (!block) return json({ error: "No structured response from model" }, 502);
-    return json(block.input, 200);
+    // Anthropic occasionally returns transient 429/5xx (overload) or an empty body.
+    // Retry a few times with backoff, and parse defensively so a hiccup upstream
+    // surfaces as a friendly retry message instead of crashing the request.
+    const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+    let lastErr = "Anthropic unavailable";
+    for (let attempt = 0; attempt < 4; attempt++) {
+      let resp: Response;
+      try {
+        resp = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-api-key": key,
+            "anthropic-version": "2023-06-01",
+          },
+          body: anthropicBody,
+        });
+      } catch (netErr) {
+        lastErr = "Network error contacting Anthropic";
+        await sleep(400 * (attempt + 1));
+        continue;
+      }
+
+      const raw = await resp.text();
+      const transient = resp.status === 429 || resp.status === 529 || resp.status >= 500 || raw.trim() === "";
+      if (transient && attempt < 3) {
+        lastErr = raw.trim() === "" ? "Empty response from Anthropic" : `Anthropic ${resp.status}`;
+        await sleep(500 * (attempt + 1));
+        continue;
+      }
+
+      let data: any;
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        if (attempt < 3) { lastErr = "Malformed response from Anthropic"; await sleep(500 * (attempt + 1)); continue; }
+        return json({ error: "The assistant is busy right now — please try again in a moment." }, 503);
+      }
+      if (!resp.ok) return json({ error: data?.error?.message || "Anthropic error" }, 502);
+      const block = (data.content || []).find((b: { type: string }) => b.type === "tool_use");
+      if (!block) return json({ error: "No structured response from model" }, 502);
+      return json(block.input, 200);
+    }
+    return json({ error: `The assistant is busy right now — please try again in a moment. (${lastErr})` }, 503);
   } catch (e) {
     return json({ error: String(e) }, 500);
   }
