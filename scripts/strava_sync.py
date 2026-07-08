@@ -148,6 +148,10 @@ def main():
             label, note = categorise(a, laps)
             entry = {"km": km, "type": label, "note": note, "done": True, "sport": "run"}
             print(f"  {date}  {label:10} {km:>5} km  ({note})")
+            if os.environ.get("DEBUG_LAPS") == date:  # temp diagnostic
+                for l in laps:
+                    if l.get("distance", 0) >= 100:
+                        print(f"      lap {round(l['distance']):>5}m  {mmss(pace_per_km(l['distance'], l['moving_time']))}/km")
         elif sport == "ride":
             entry = {"km": km, "type": "Ride", "note": f"{km} km ride", "done": True, "sport": "ride"}
             print(f"  {date}  Ride       {km:>5} km")

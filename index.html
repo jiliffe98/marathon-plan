@@ -558,11 +558,14 @@ function matchIdx(arr,name){
   if(i<0)i=arr.findIndex(p=>typeClass(p.a)===t);
   return i;
 }
+function weekdayName(iso){return ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(iso+"T00:00:00").getDay()];}
 function planPayload(){
-  const out=[];
+  const t=todayISO(), out=[];
   PLAN.forEach((w,wi)=>{const isos=isoSeq(w.start);isos.forEach((iso,di)=>{
     const sessions=plannedFor(wi,iso).map(p=>p.km!=null?`${p.a} (${p.km}k)`:p.a);
-    out.push({date:iso,day:DNAMES[di],week:w.no,sessions});
+    const e={date:iso,day:DNAMES[di],week:w.no,sessions};
+    if(iso===t)e.today=true;
+    out.push(e);
   });});
   return out;
 }
@@ -601,7 +604,9 @@ let pendingOps=null, convo=[];
 const aiStatus=$("#ai-status"), aiInput=$("#ai-input"), aiGo=$("#ai-go"), aiov=$("#aiov");
 function setS(el,t,err){if(el){el.textContent=t||"";el.className="ai-status"+(err?" err":"");}}
 function buildInstruction(){
-  return "You are refining training-plan changes through a short back-and-forth with the user. "
+  const t=todayISO();
+  return `Today's date is ${t} (${weekdayName(t)}). Resolve "today", "tonight", "tomorrow", "yesterday", "this week", "next week", and weekday names relative to that date. The plan day with "today":true is today.\n\n`
+    + "You are refining training-plan changes through a short back-and-forth with the user. "
     + "Consider the ENTIRE conversation below and return the COMPLETE set of changes needed from the "
     + "current plan to satisfy the user's latest intent — not just the most recent delta. "
     + "If a refinement replaces an earlier idea, drop the earlier one.\n\n" + convo.join("\n");
@@ -640,18 +645,21 @@ async function aiRefine(){
   finally{btn.disabled=false;}
 }
 function aiClose(){aiov.classList.remove("show");pendingOps=null;convo=[];$("#ai-followup").value="";setS($("#ai-status2"),"");const rep=$("#ai-reply");rep.textContent="";rep.style.display="none";}
-function wireDictation(input,mic,statusEl){
-  let recog=null,recording=false;
-  mic.addEventListener("click",()=>{
+function wireDictation(input,mic,statusEl,onFinal){
+  let recog=null,recording=false,got=false,ph="";
+  const reset=()=>{recording=false;got=false;mic.classList.remove("rec");mic.textContent="🎤";if(ph)input.placeholder=ph;};
+  mic.addEventListener("click",e=>{
+    e.stopPropagation();
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
-    if(!SR){setS(statusEl,"Voice input isn't supported here — type instead.",true);return;}
-    if(recording&&recog){recog.stop();return;}
+    if(!SR){setS(statusEl,"Voice input isn't supported in this browser — type instead.",true);return;}
+    if(recording&&recog){recog.stop();return;}       // tap again = stop now
     recog=new SR();recog.lang="en-AU";recog.interimResults=true;recog.continuous=false;
     const base=input.value?input.value.trim()+" ":"";
-    recog.onresult=e=>{let t="";for(let i=0;i<e.results.length;i++)t+=e.results[i][0].transcript;input.value=base+t;};
-    recog.onend=()=>{recording=false;mic.classList.remove("rec");};
-    recog.onerror=()=>{recording=false;mic.classList.remove("rec");};
-    recording=true;mic.classList.add("rec");recog.start();
+    ph=input.placeholder;
+    recog.onresult=ev=>{got=true;let t="";for(let i=0;i<ev.results.length;i++)t+=ev.results[i][0].transcript;input.value=base+t;};
+    recog.onend=()=>{const had=got&&input.value.trim();reset();setS(statusEl,"");if(had&&onFinal)onFinal();};
+    recog.onerror=ev=>{reset();if(ev.error!=="no-speech"&&ev.error!=="aborted")setS(statusEl,"Voice error — please type instead.",true);else setS(statusEl,"");};
+    recording=true;mic.classList.add("rec");mic.textContent="■";input.placeholder="Listening… speak your change";setS(statusEl,"🎙 Listening…");recog.start();
   });
 }
 if(AI_ON){
@@ -662,8 +670,8 @@ if(AI_ON){
   $("#ai-apply").addEventListener("click",()=>{if(pendingOps&&pendingOps.length)applyOps(pendingOps);aiInput.value="";aiClose();setS(aiStatus,"Changes applied.");});
   $("#ai-cancel").addEventListener("click",aiClose);
   aiov.addEventListener("click",e=>{if(e.target===aiov)aiClose();});
-  wireDictation(aiInput,$("#ai-mic"),aiStatus);
-  wireDictation($("#ai-followup"),$("#ai-mic2"),$("#ai-status2"));
+  wireDictation(aiInput,$("#ai-mic"),aiStatus,aiSuggest);
+  wireDictation($("#ai-followup"),$("#ai-mic2"),$("#ai-status2"),aiRefine);
 }
 
 /* ---------- Strava resync ---------- */

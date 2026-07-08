@@ -5,6 +5,11 @@ on:
   schedule:
     - cron: "0 23 * * *"
   workflow_dispatch:
+    inputs:
+      debug_date:
+        description: "Print lap breakdown for this YYYY-MM-DD (diagnostic)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -24,6 +29,7 @@ jobs:
           STRAVA_CLIENT_ID: ${{ secrets.STRAVA_CLIENT_ID }}
           STRAVA_CLIENT_SECRET: ${{ secrets.STRAVA_CLIENT_SECRET }}
           STRAVA_REFRESH_TOKEN: ${{ secrets.STRAVA_REFRESH_TOKEN }}
+          DEBUG_LAPS: ${{ github.event.inputs.debug_date }}
         run: python scripts/strava_sync.py
 
       - name: Commit updated data
