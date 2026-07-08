@@ -29,16 +29,6 @@
       "id": "18911077136"
     }
   ],
-  "2026-06-17": [
-    {
-      "km": 18.7,
-      "type": "Ride",
-      "note": "18.7 km ride",
-      "done": true,
-      "sport": "ride",
-      "id": "18950216209"
-    }
-  ],
   "2026-06-18": [
     {
       "km": 5.0,
@@ -173,7 +163,15 @@
       "done": true,
       "sport": "run",
       "id": "19206730959"
+    },
+    {
+      "km": null,
+      "type": "Strength",
+      "note": "68 min",
+      "done": true,
+      "sport": "strength",
+      "id": "19211530481"
     }
   ],
-  "_synced_at": "2026-07-07T00:11:28Z"
+  "_synced_at": "2026-07-08T00:00:08Z"
 }
