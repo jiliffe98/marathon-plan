@@ -559,11 +559,12 @@ function matchIdx(arr,name){
   return i;
 }
 function weekdayName(iso){return ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(iso+"T00:00:00").getDay()];}
+function mondayOf(iso){const d=new Date(iso+"T00:00:00");d.setDate(d.getDate()-((d.getDay()+6)%7));return d.getTime();}
 function planPayload(){
-  const t=todayISO(), out=[];
+  const t=todayISO(), tm=mondayOf(t), out=[];
   PLAN.forEach((w,wi)=>{const isos=isoSeq(w.start);isos.forEach((iso,di)=>{
     const sessions=plannedFor(wi,iso).map(p=>p.km!=null?`${p.a} (${p.km}k)`:p.a);
-    const e={date:iso,day:DNAMES[di],week:w.no,sessions};
+    const e={date:iso,day:DNAMES[di],week:w.no,wk:Math.round((mondayOf(iso)-tm)/6.048e8),sessions};
     if(iso===t)e.today=true;
     out.push(e);
   });});
@@ -605,7 +606,7 @@ const aiStatus=$("#ai-status"), aiInput=$("#ai-input"), aiGo=$("#ai-go"), aiov=$
 function setS(el,t,err){if(el){el.textContent=t||"";el.className="ai-status"+(err?" err":"");}}
 function buildInstruction(){
   const t=todayISO();
-  return `Today's date is ${t} (${weekdayName(t)}). Resolve "today", "tonight", "tomorrow", "yesterday", "this week", "next week", and weekday names relative to that date. The plan day with "today":true is today.\n\n`
+  return `Today's date is ${t} (${weekdayName(t)}). Each plan day has "wk": weeks relative to now (0 = THIS week, -1 = last week, 1 = next week). Resolve "today"/"tomorrow"/"yesterday" by date; resolve "this week"/"next week"/"last week"/"in N weeks" using the wk field. To find a session like "the long run" in a target week, look for the day whose sessions include that name — do NOT assume it falls on a particular weekday (sessions may have been moved). The day with "today":true is today.\n\n`
     + "You are refining training-plan changes through a short back-and-forth with the user. "
     + "Consider the ENTIRE conversation below and return the COMPLETE set of changes needed from the "
     + "current plan to satisfy the user's latest intent — not just the most recent delta. "
@@ -646,8 +647,8 @@ async function aiRefine(){
 }
 function aiClose(){aiov.classList.remove("show");pendingOps=null;convo=[];$("#ai-followup").value="";setS($("#ai-status2"),"");const rep=$("#ai-reply");rep.textContent="";rep.style.display="none";}
 function wireDictation(input,mic,statusEl,onFinal){
-  let recog=null,recording=false,got=false,ph="";
-  const reset=()=>{recording=false;got=false;mic.classList.remove("rec");mic.textContent="🎤";if(ph)input.placeholder=ph;};
+  let recog=null,recording=false,got=false,ph="",timer=null;
+  const reset=()=>{recording=false;got=false;mic.classList.remove("rec");mic.textContent="🎤";if(ph)input.placeholder=ph;if(timer){clearTimeout(timer);timer=null;}};
   mic.addEventListener("click",e=>{
     e.stopPropagation();
     const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
@@ -657,9 +658,13 @@ function wireDictation(input,mic,statusEl,onFinal){
     const base=input.value?input.value.trim()+" ":"";
     ph=input.placeholder;
     recog.onresult=ev=>{got=true;let t="";for(let i=0;i<ev.results.length;i++)t+=ev.results[i][0].transcript;input.value=base+t;};
-    recog.onend=()=>{const had=got&&input.value.trim();reset();setS(statusEl,"");if(had&&onFinal)onFinal();};
-    recog.onerror=ev=>{reset();if(ev.error!=="no-speech"&&ev.error!=="aborted")setS(statusEl,"Voice error — please type instead.",true);else setS(statusEl,"");};
-    recording=true;mic.classList.add("rec");mic.textContent="■";input.placeholder="Listening… speak your change";setS(statusEl,"🎙 Listening…");recog.start();
+    recog.onend=()=>{const had=got&&input.value.trim();reset();if(had&&onFinal){setS(statusEl,"");onFinal();}else{setS(statusEl,"Didn't catch that — tap 🎤 to try again, or type.");}};
+    recog.onerror=ev=>{reset();
+      if(ev.error==="not-allowed"||ev.error==="service-not-allowed")setS(statusEl,"Microphone blocked — allow mic access, or type.",true);
+      else setS(statusEl,"Didn't catch that — tap 🎤 to try again, or type.");};
+    recording=true;mic.classList.add("rec");mic.textContent="■";input.placeholder="Listening… speak your change";setS(statusEl,"🎙 Listening…");
+    timer=setTimeout(()=>{if(recording&&recog)recog.stop();},8000);   // safety auto-stop
+    recog.start();
   });
 }
 if(AI_ON){
