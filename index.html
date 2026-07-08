@@ -547,7 +547,7 @@ $("#m-cancel").addEventListener("click",close);
 ov.addEventListener("click",e=>{if(e.target===ov)close();});
 function close(){ov.classList.remove("show");editing=null;}
 
-$("#reset").addEventListener("click",()=>{if(confirm("Clear all YOUR edits (notes, manual logs, rearrangements)? Strava-imported data stays.")){USER={planned:{},actuals:{},notes:{}};queueSave();render();}});
+$("#reset").addEventListener("click",()=>{if(confirm("Clear all YOUR edits (notes, manual logs, rearrangements)? Strava-imported data stays.")){USER={planned:{},actuals:{},notes:{},actNotes:{}};queueSave();render();}});
 
 /* ---------- natural-language editing ---------- */
 const AI_ON = SB && CFG.AI_EDIT;
@@ -560,6 +560,7 @@ function matchIdx(arr,name){
 }
 function weekdayName(iso){return ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"][new Date(iso+"T00:00:00").getDay()];}
 function mondayOf(iso){const d=new Date(iso+"T00:00:00");d.setDate(d.getDate()-((d.getDay()+6)%7));return d.getTime();}
+function isoFromMs(ms){const d=new Date(ms);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
 function planPayload(){
   const t=todayISO(), tm=mondayOf(t), out=[];
   PLAN.forEach((w,wi)=>{const isos=isoSeq(w.start);isos.forEach((iso,di)=>{
@@ -605,8 +606,10 @@ let pendingOps=null, convo=[];
 const aiStatus=$("#ai-status"), aiInput=$("#ai-input"), aiGo=$("#ai-go"), aiov=$("#aiov");
 function setS(el,t,err){if(el){el.textContent=t||"";el.className="ai-status"+(err?" err":"");}}
 function buildInstruction(){
-  const t=todayISO();
-  return `Today's date is ${t} (${weekdayName(t)}). Each plan day has "wk": weeks relative to now (0 = THIS week, -1 = last week, 1 = next week). Resolve "today"/"tomorrow"/"yesterday" by date; resolve "this week"/"next week"/"last week"/"in N weeks" using the wk field. To find a session like "the long run" in a target week, look for the day whose sessions include that name — do NOT assume it falls on a particular weekday (sessions may have been moved). The day with "today":true is today.\n\n`
+  const t=todayISO(), tm=mondayOf(t), W=6.048e8;
+  const rng=n=>`${isoFromMs(tm+n*W)}..${isoFromMs(tm+n*W+6*86400000)}`;
+  return `Today's date is ${t} (${weekdayName(t)}). Each plan day has "wk" = weeks from now (0 = this week, 1 = next week, -1 = last week). Week date ranges (Mon–Sun): last week (wk -1) = ${rng(-1)}; THIS week (wk 0) = ${rng(0)}; NEXT week (wk 1) = ${rng(1)}; in 2 weeks (wk 2) = ${rng(2)}.\n`
+    + `Resolve time references strictly: "today"/"tomorrow"/"yesterday" by exact date; "this week" = ONLY days with wk 0; "next week" = ONLY days with wk 1; "last week" = ONLY days with wk -1. To find a session (e.g. "the long run") in the target week, pick the day within that wk whose sessions include that name — never assume a weekday and never fall back to a different week. The day with "today":true is today.\n\n`
     + "You are refining training-plan changes through a short back-and-forth with the user. "
     + "Consider the ENTIRE conversation below and return the COMPLETE set of changes needed from the "
     + "current plan to satisfy the user's latest intent — not just the most recent delta. "
