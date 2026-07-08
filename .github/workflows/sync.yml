@@ -1,9 +1,9 @@
 name: Strava sync
 
-# Runs every day at 9am Sydney (AEST, UTC+10 -> 23:00 UTC prev day) and on demand.
+# Runs at the top of every hour and on demand.
 on:
   schedule:
-    - cron: "0 23 * * *"
+    - cron: "0 * * * *"
   workflow_dispatch:
     inputs:
       debug_date:

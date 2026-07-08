@@ -85,25 +85,39 @@ def categorise(act, laps):
     def pc(l):
         return pace_per_km(l["distance"], l["moving_time"])
 
-    paces = [pc(l) for l in work]
-
-    # INTERVALS: reps separated from recovery by a clear pace gap  ->  "6x400m @3:48-4:10"
-    sp = sorted(paces)
-    gi, gap = -1, 0
-    for i in range(len(sp) - 1):
-        if sp[i + 1] - sp[i] > gap:
-            gap, gi = sp[i + 1] - sp[i], i
-    if gap >= INTERVAL_GAP:
-        cut = sp[gi]
-        fast = [l for l in work if pc(l) <= cut + 1]
-        rest = len(work) - len(fast)
-        if len(fast) >= MIN_REPS and all(l["distance"] < REP_MAX_M for l in fast) and rest >= len(fast) - 1:
-            rep_m = round(sum(l["distance"] for l in fast) / len(fast) / 100) * 100
-            label = f"{rep_m}m" if rep_m < 1000 else f"{rep_m/1000:.1f}".rstrip("0").rstrip(".") + "km"
-            fps = [pc(l) for l in fast]
-            fp, spx = min(fps), max(fps)
-            rng = mmss(fp) if (spx - fp) < 3 else f"{mmss(fp)}-{mmss(spx)}"
-            return "Intervals", f"{len(fast)}x{label} @{rng}"
+    # INTERVALS: short reps clearly faster than the recovery jogs between them.
+    # e.g. "6x400m @3:48-4:10" or a mixed session "3x800m + 3x400m".
+    short = [l for l in work if l["distance"] < REP_MAX_M]
+    if len(short) >= MIN_REPS:
+        sp = sorted(pc(l) for l in short)
+        gi, gap = -1, 0
+        for i in range(len(sp) - 1):
+            if sp[i + 1] - sp[i] > gap:
+                gap, gi = sp[i + 1] - sp[i], i
+        if gap >= INTERVAL_GAP:
+            cut = sp[gi]
+            fast = [l for l in short if pc(l) <= cut + 1]
+            # Group the fast laps by rounded distance. Real rep sets repeat
+            # (>=2 laps of the same distance), so this drops a lone warm-up or
+            # odd lap that happens to fall on the fast side, and lets us name
+            # mixed sessions like "3x800m + 3x400m".
+            groups = {}
+            for l in fast:
+                key = int(round(l["distance"] / 100.0)) * 100
+                groups.setdefault(key, []).append(l)
+            reps_groups = {k: v for k, v in groups.items() if len(v) >= 2}
+            reps = [l for v in reps_groups.values() for l in v]
+            rest = len(work) - len(reps)
+            if len(reps) >= MIN_REPS and rest >= 1:
+                parts = []
+                for key in sorted(reps_groups, reverse=True):  # longer reps first
+                    v = reps_groups[key]
+                    dist_label = f"{key}m" if key < 1000 else f"{key/1000:.1f}".rstrip("0").rstrip(".") + "km"
+                    gp = [pc(l) for l in v]
+                    lo, hi = min(gp), max(gp)
+                    rng = mmss(lo) if (hi - lo) < 3 else f"{mmss(lo)}-{mmss(hi)}"
+                    parts.append(f"{len(v)}x{dist_label} @{rng}")
+                return "Intervals", " + ".join(parts)
 
     # THRESHOLD: a sustained >=2km block clearly faster than the easy laps  ->  "6km @ 4:55"
     bigs = [l for l in work if l["distance"] >= REP_MAX_M]
