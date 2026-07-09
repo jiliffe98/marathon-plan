@@ -171,7 +171,15 @@
       "done": true,
       "sport": "run",
       "id": "19235291737"
+    },
+    {
+      "km": null,
+      "type": "Strength",
+      "note": "36 min",
+      "done": true,
+      "sport": "strength",
+      "id": "19239696383"
     }
   ],
-  "_synced_at": "2026-07-09T08:29:17Z"
+  "_synced_at": "2026-07-09T11:51:22Z"
 }
