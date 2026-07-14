@@ -237,7 +237,15 @@
       "done": true,
       "sport": "ride",
       "id": "19315597554"
+    },
+    {
+      "km": 2.9,
+      "type": "Ride",
+      "note": "2.9 km ride",
+      "done": true,
+      "sport": "ride",
+      "id": "19315827053"
     }
   ],
-  "_synced_at": "2026-07-14T22:52:24Z"
+  "_synced_at": "2026-07-14T23:45:53Z"
 }
