@@ -4,6 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Sydney Marathon Training Plan</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#15688a">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="icons/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Marathon">
 <style>
   :root{
     --ground:#f7f8fa;--card:#fff;--ink:#19222e;--muted:#64727f;--line:#e3e8ee;
@@ -739,6 +747,17 @@ async function boot(){
   render(); setLastSync();
 }
 boot();
+
+/* ---------- installable app (PWA) + offline ---------- */
+if("serviceWorker" in navigator){
+  const hadController=!!navigator.serviceWorker.controller;
+  let reloaded=false;
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{
+    if(reloaded||!hadController)return;   // reload once after an update, not on first install
+    reloaded=true;location.reload();
+  });
+  window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(e=>console.warn("SW registration failed",e));});
+}
 </script>
 </body>
 </html>
