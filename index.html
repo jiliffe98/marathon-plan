@@ -10,7 +10,7 @@
 <link rel="icon" href="icons/icon-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Marathon">
 <style>
   :root{
@@ -28,7 +28,12 @@
   html,body{margin:0}
   body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
     color:var(--ink);background:var(--ground);line-height:1.45}
-  .wrap{padding:clamp(14px,3.5vw,46px)}
+  .wrap{padding:clamp(14px,3.5vw,46px);
+    /* keep content clear of the iOS notch / status bar / home indicator when installed */
+    padding-top:calc(clamp(14px,3.5vw,46px) + env(safe-area-inset-top));
+    padding-right:calc(clamp(14px,3.5vw,46px) + env(safe-area-inset-right));
+    padding-bottom:calc(clamp(14px,3.5vw,46px) + env(safe-area-inset-bottom));
+    padding-left:calc(clamp(14px,3.5vw,46px) + env(safe-area-inset-left))}
   .inner{max-width:1180px;margin:0 auto}
   .eyebrow{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--harbour);font-weight:700;margin:0 0 8px}
   h1{font-size:clamp(24px,4.5vw,42px);line-height:1.04;margin:0;font-weight:800;letter-spacing:-.02em}
