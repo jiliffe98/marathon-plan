@@ -50,16 +50,11 @@
   button.btn:hover{border-color:var(--harbour);color:var(--harbour)}
   .hint{font-size:12px;color:var(--muted);margin:10px 0 0}
 
-  /* natural-language editor */
-  .aibar{display:none;margin-top:14px;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:10px;gap:8px;align-items:center}
-  .aibar.on{display:flex}
-  .aibar input{flex:1;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:9px 11px;color:var(--ink);min-width:0}
-  .aibar .mic{flex:none;width:38px;height:38px;border-radius:9px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-size:16px}
-  .aibar .mic.rec{background:var(--coral);border-color:var(--coral);color:#fff;animation:pulse 1s infinite}
+  /* voice mic button (used in the coach chat) */
+  .mic{flex:none;width:38px;height:38px;border-radius:9px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-size:16px}
+  .mic.rec{background:var(--coral);border-color:var(--coral);color:#fff;animation:pulse 1s infinite}
   @keyframes pulse{50%{opacity:.55}}
-  @media (prefers-reduced-motion:reduce){.aibar .mic.rec{animation:none}}
-  .ai-go{flex:none;background:var(--harbour);color:#fff;border-color:var(--harbour)}
-  .ai-go[disabled]{opacity:.6;cursor:default}
+  @media (prefers-reduced-motion:reduce){.mic.rec{animation:none}}
   .ai-status{font-size:12px;color:var(--muted);margin:6px 2px 0;min-height:14px}
   .ai-status.err{color:var(--coral)}
   .oplist{display:flex;flex-direction:column;gap:7px;margin-top:4px}
@@ -84,6 +79,14 @@
   .coach-suggests{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 4px}
   .coach-suggests button{font:inherit;font-size:11.5px;color:var(--harbour);background:var(--harbour-soft);border:1px solid #cfe1ea;border-radius:14px;padding:4px 10px;cursor:pointer}
   .coach-suggests button:hover{filter:brightness(.97)}
+  .cmsg.proposal{background:var(--harbour-soft);border:1px solid #cfe1ea;max-width:92%}
+  .prop-title{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:800;color:var(--harbour);margin-bottom:6px}
+  .cmsg.proposal .oprow{font-size:13px;padding:7px 9px;border:1px solid #cfe1ea;border-radius:8px;background:#fff;line-height:1.35;margin-bottom:6px}
+  .cmsg.proposal .oprow b{font-variant-numeric:tabular-nums}
+  .prop-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:2px}
+  .prop-actions .btn{font-size:12px;padding:6px 12px}
+  .prop-done{font-size:12.5px;font-weight:700;color:var(--good);text-align:right}
+  .prop-done.muted{color:var(--muted);font-weight:600}
 
   .weeks{display:flex;flex-direction:column;gap:18px;margin-top:20px}
   .past-label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--muted)}
@@ -209,58 +212,28 @@
     <div class="stat">Longest run <b id="s-long">0</b></div>
     <div class="stat">Last Strava sync <b id="s-sync">—</b></div>
     <div class="spacer"></div>
-    <button class="btn" id="coachbtn" style="display:none">💬 Ask coach</button>
+    <button class="btn" id="coachbtn" style="display:none">💬 Coach</button>
     <span class="syncpill" id="syncpill">…</span>
     <button class="btn" id="resync">↻ Resync Strava</button>
     <button class="btn" id="reset">Reset edits</button>
   </div>
   <div class="ai-status" id="sync-msg"></div>
-  <p class="hint">Volume counts logged runs only (rides excluded). Strava-imported sessions show an orange tag and can be overridden by tapping the day.</p>
-
-  <div class="aibar" id="aibar">
-    <input type="text" id="ai-input" placeholder="Ask to change the plan, e.g. “move Thursday's threshold to Friday”">
-    <button class="mic" id="ai-mic" title="Dictate">🎤</button>
-    <button class="btn ai-go" id="ai-go">Suggest</button>
-  </div>
-  <div class="ai-status" id="ai-status"></div>
+  <p class="hint">Tap <b>💬 Coach</b> to ask about your training or change the plan in plain English. Volume counts logged runs only (rides excluded); Strava-imported sessions show an orange tag and can be overridden by tapping the day.</p>
 
   <div class="weeks" id="weeks"></div>
 </div></div>
 
-<div class="ov" id="aiov">
-  <div class="modal" role="dialog" aria-modal="true">
-    <div class="m-head"><h3>Proposed changes</h3><p id="ai-sum" class="ai-summary"></p></div>
-    <div class="m-body">
-      <div class="oplist" id="ai-ops"></div>
-      <div class="fld" style="margin-top:4px">
-        <label class="cap">Not quite? Refine it</label>
-        <div class="addrow">
-          <input type="text" id="ai-followup" placeholder="e.g. “make it 30k instead” or “also move the ride”">
-          <button class="mic" id="ai-mic2" title="Dictate">🎤</button>
-          <button class="btn" id="ai-refine">Refine</button>
-        </div>
-        <div class="ai-reply" id="ai-reply"></div>
-        <div class="ai-status" id="ai-status2"></div>
-      </div>
-    </div>
-    <div class="m-foot">
-      <button class="btn" id="ai-cancel">Cancel</button>
-      <button class="btn primary" id="ai-apply">Apply changes</button>
-    </div>
-  </div>
-</div>
-
 <div class="ov" id="coachov">
   <div class="modal coachmodal" role="dialog" aria-modal="true">
     <div class="m-head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
-      <div><h3>Ask your coach</h3><p>Grounded in your plan &amp; Strava sessions</p></div>
+      <div><h3>Your coach</h3><p>Ask about training, or change your plan</p></div>
       <button class="btn" id="coach-close">Close</button>
     </div>
     <div class="coach-scroll" id="coach-body"></div>
     <div class="coach-suggests" id="coach-suggests"></div>
     <div class="ai-status" id="coach-status" style="padding:0 12px;margin:0"></div>
     <div class="coach-inrow">
-      <input type="text" id="coach-input" placeholder="e.g. More threshold or intervals?">
+      <input type="text" id="coach-input" placeholder="Ask a question or change the plan…">
       <button class="mic" id="coach-mic" title="Dictate">🎤</button>
       <button class="btn primary" id="coach-send">Send</button>
     </div>
@@ -597,8 +570,8 @@ function close(){ov.classList.remove("show");editing=null;}
 
 $("#reset").addEventListener("click",()=>{if(confirm("Clear all YOUR edits (notes, manual logs, rearrangements)? Strava-imported data stays.")){USER={planned:{},actuals:{},notes:{},actNotes:{}};queueSave();render();}});
 
-/* ---------- natural-language editing ---------- */
-const AI_ON = SB && CFG.AI_EDIT;
+/* ---------- plan-edit helpers (used by the coach chat) ---------- */
+function setS(el,t,err){if(el){el.textContent=t||"";el.className="ai-status"+(err?" err":"");}}
 function wiForIso(iso){return PLAN.findIndex(w=>isoSeq(w.start).includes(iso));}
 function matchIdx(arr,name){
   const t=typeClass(name||"");
@@ -650,53 +623,6 @@ function applyOps(ops){
   });
   queueSave(); render();
 }
-let pendingOps=null, convo=[];
-const aiStatus=$("#ai-status"), aiInput=$("#ai-input"), aiGo=$("#ai-go"), aiov=$("#aiov");
-function setS(el,t,err){if(el){el.textContent=t||"";el.className="ai-status"+(err?" err":"");}}
-function buildInstruction(){
-  const t=todayISO(), tm=mondayOf(t), W=6.048e8;
-  const rng=n=>`${isoFromMs(tm+n*W)}..${isoFromMs(tm+n*W+6*86400000)}`;
-  return `Today's date is ${t} (${weekdayName(t)}). Each plan day has "wk" = weeks from now (0 = this week, 1 = next week, -1 = last week). Week date ranges (Mon–Sun): last week (wk -1) = ${rng(-1)}; THIS week (wk 0) = ${rng(0)}; NEXT week (wk 1) = ${rng(1)}; in 2 weeks (wk 2) = ${rng(2)}.\n`
-    + `Resolve time references strictly: "today"/"tomorrow"/"yesterday" by exact date; "this week" = ONLY days with wk 0; "next week" = ONLY days with wk 1; "last week" = ONLY days with wk -1. To find a session (e.g. "the long run") in the target week, pick the day within that wk whose sessions include that name — never assume a weekday and never fall back to a different week. The day with "today":true is today.\n\n`
-    + "You are refining training-plan changes through a short back-and-forth with the user. "
-    + "Consider the ENTIRE conversation below and return the COMPLETE set of changes needed from the "
-    + "current plan to satisfy the user's latest intent — not just the most recent delta. "
-    + "If a refinement replaces an earlier idea, drop the earlier one.\n\n" + convo.join("\n");
-}
-async function callPlan(statusEl){
-  setS(statusEl,"Thinking…");
-  const r=await fetch(CFG.SUPABASE_URL+"/functions/v1/nlplan",{
-    method:"POST",
-    headers:{"content-type":"application/json",apikey:CFG.SUPABASE_ANON_KEY,Authorization:"Bearer "+CFG.SUPABASE_ANON_KEY},
-    body:JSON.stringify({instruction:buildInstruction(),plan:planPayload()})});
-  const d=await r.json();
-  if(!r.ok||d.error)throw new Error(d.error||("HTTP "+r.status));
-  return d;
-}
-function renderProposal(d,isRefine){
-  pendingOps=d.ops||[];
-  $("#ai-sum").textContent=d.summary||"";
-  $("#ai-ops").innerHTML=pendingOps.length?pendingOps.map(o=>`<div class="oprow">${opText(o)}</div>`).join(""):'<div class="oprow">No changes.</div>';
-  const rep=$("#ai-reply"), msg=d.reply||"";
-  if(isRefine&&msg){rep.textContent=msg;rep.style.display="block";}else{rep.textContent="";rep.style.display="none";}
-  convo.push("Assistant proposed: "+(d.summary||"")+" | ops="+JSON.stringify(pendingOps));
-}
-async function aiSuggest(){
-  const instruction=aiInput.value.trim(); if(!instruction)return;
-  convo=["User: "+instruction]; aiGo.disabled=true;
-  try{const d=await callPlan(aiStatus);renderProposal(d,false);aiov.classList.add("show");setS(aiStatus,"");}
-  catch(e){setS(aiStatus,"Couldn't get suggestions: "+e.message,true);}
-  finally{aiGo.disabled=false;}
-}
-async function aiRefine(){
-  const f=$("#ai-followup").value.trim(); if(!f)return;
-  convo.push("User refinement: "+f);
-  const btn=$("#ai-refine"); btn.disabled=true;
-  try{const d=await callPlan($("#ai-status2"));renderProposal(d,true);$("#ai-followup").value="";setS($("#ai-status2"),"");}
-  catch(e){setS($("#ai-status2"),"Couldn't refine: "+e.message,true);}
-  finally{btn.disabled=false;}
-}
-function aiClose(){aiov.classList.remove("show");pendingOps=null;convo=[];$("#ai-followup").value="";setS($("#ai-status2"),"");const rep=$("#ai-reply");rep.textContent="";rep.style.display="none";}
 function wireDictation(input,mic,statusEl,onFinal){
   let recog=null,recording=false,got=false,ph="",timer=null;
   const reset=()=>{recording=false;got=false;mic.classList.remove("rec");mic.textContent="🎤";if(ph)input.placeholder=ph;if(timer){clearTimeout(timer);timer=null;}};
@@ -713,21 +639,10 @@ function wireDictation(input,mic,statusEl,onFinal){
     recog.onerror=ev=>{reset();
       if(ev.error==="not-allowed"||ev.error==="service-not-allowed")setS(statusEl,"Microphone blocked — allow mic access, or type.",true);
       else setS(statusEl,"Didn't catch that — tap 🎤 to try again, or type.");};
-    recording=true;mic.classList.add("rec");mic.textContent="■";input.placeholder="Listening… speak your change";setS(statusEl,"🎙 Listening…");
+    recording=true;mic.classList.add("rec");mic.textContent="■";input.placeholder="Listening… speak now";setS(statusEl,"🎙 Listening…");
     timer=setTimeout(()=>{if(recording&&recog)recog.stop();},8000);   // safety auto-stop
     recog.start();
   });
-}
-if(AI_ON){
-  aiGo.addEventListener("click",aiSuggest);
-  aiInput.addEventListener("keydown",e=>{if(e.key==="Enter")aiSuggest();});
-  $("#ai-refine").addEventListener("click",aiRefine);
-  $("#ai-followup").addEventListener("keydown",e=>{if(e.key==="Enter")aiRefine();});
-  $("#ai-apply").addEventListener("click",()=>{if(pendingOps&&pendingOps.length)applyOps(pendingOps);aiInput.value="";aiClose();setS(aiStatus,"Changes applied.");});
-  $("#ai-cancel").addEventListener("click",aiClose);
-  aiov.addEventListener("click",e=>{if(e.target===aiov)aiClose();});
-  wireDictation(aiInput,$("#ai-mic"),aiStatus,aiSuggest);
-  wireDictation($("#ai-followup"),$("#ai-mic2"),$("#ai-status2"),aiRefine);
 }
 
 /* ---------- coach chat ---------- */
@@ -749,9 +664,10 @@ function mdLite(s){
   return out;
 }
 function coachContext(){
-  const t=todayISO();
+  const t=todayISO(), tm=mondayOf(t), W=6.048e8;
+  const rng=n=>isoFromMs(tm+n*W)+".."+isoFromMs(tm+n*W+6*86400000);
   const weeksToGo=Math.max(0,Math.ceil((new Date(RACE_ISO)-new Date(t))/6.048e8));
-  const plan=PLAN.filter(w=>w.total||w.long).map(w=>({week:w.no,range:w.range,targetKm:w.total||null,targetLong:w.long||null}));
+  const targets=PLAN.filter(w=>w.total||w.long).map(w=>({week:w.no,range:w.range,targetKm:w.total||null,targetLong:w.long||null}));
   const done=[];
   PLAN.forEach((w,wi)=>isoSeq(w.start).forEach(iso=>{
     if(iso>t)return;
@@ -759,35 +675,57 @@ function coachContext(){
       done.push({date:iso,type:a.atype||a.type||actCategory(a),km:(typeof a.km==="number"?a.km:null),note:a.note||null});
     });
   }));
-  return {today:t,raceDate:RACE_ISO,weeksToGo,plan,done};
+  return {today:t,raceDate:RACE_ISO,weeksToGo,
+    weekRanges:{lastWeek:rng(-1),thisWeek:rng(0),nextWeek:rng(1),inTwoWeeks:rng(2)},
+    days:planPayload(),targets,done};
 }
 function coachRender(){
-  coachBody.innerHTML = coachMsgs.map(m=>
-    m.role==="user"
-      ? `<div class="cmsg user">${escapeHtml(m.content)}</div>`
-      : `<div class="cmsg coach">${mdLite(m.content)}</div>`
-  ).join("") + (coachPending?`<div class="cmsg coach pending">Coach is thinking…</div>`:"");
+  coachBody.innerHTML = coachMsgs.map((m,i)=>{
+    if(m.role==="user") return `<div class="cmsg user">${escapeHtml(m.content)}</div>`;
+    let h = m.content ? `<div class="cmsg coach">${mdLite(m.content)}</div>` : "";
+    if(m.ops && m.ops.length){
+      h += `<div class="cmsg coach proposal">`
+        + `<div class="prop-title">Proposed ${m.ops.length>1?"changes":"change"}</div>`
+        + m.ops.map(o=>`<div class="oprow">${opText(o)}</div>`).join("")
+        + (m.applied ? `<div class="prop-done">✓ Applied</div>`
+           : m.dismissed ? `<div class="prop-done muted">Dismissed</div>`
+           : `<div class="prop-actions"><button class="btn" data-dismiss="${i}">Dismiss</button><button class="btn primary" data-apply="${i}">Apply</button></div>`)
+        + `</div>`;
+    }
+    return h;
+  }).join("") + (coachPending?`<div class="cmsg coach pending">Coach is thinking…</div>`:"");
   coachBody.scrollTop=coachBody.scrollHeight;
 }
 async function coachSend(){
   const q=coachInput.value.trim(); if(!q||coachPending)return;
   coachMsgs.push({role:"user",content:q}); coachInput.value=""; coachPending=true; coachRender();
-  // API history must start with a user turn — drop the leading greeting.
-  const hist=coachMsgs.slice(); while(hist.length&&hist[0].role!=="user")hist.shift();
+  // Build API history from plain text turns; represent a past proposal as text
+  // so follow-up refinements have context. Must start with a user turn.
+  const hist=[];
+  for(const m of coachMsgs){
+    if(m.role==="user"){ hist.push({role:"user",content:m.content}); continue; }
+    let c=m.content||"";
+    if(m.ops&&m.ops.length) c=(c?c+"\n\n":"")+"(Proposed: "+(m.summary||"plan change")+(m.applied?" — applied":m.dismissed?" — dismissed by user":"")+")";
+    if(c.trim()) hist.push({role:"assistant",content:c});
+  }
+  while(hist.length&&hist[0].role!=="user")hist.shift();
   try{
     const r=await fetch(CFG.SUPABASE_URL+"/functions/v1/coach",{method:"POST",
       headers:{"content-type":"application/json",apikey:CFG.SUPABASE_ANON_KEY,Authorization:"Bearer "+CFG.SUPABASE_ANON_KEY},
       body:JSON.stringify({messages:hist,context:coachContext()})});
     const d=await r.json();
     if(!r.ok||d.error)throw new Error(d.error||("HTTP "+r.status));
-    coachPending=false; coachMsgs.push({role:"assistant",content:d.reply}); coachRender();
+    coachPending=false;
+    const entry={role:"assistant",content:d.reply||""};
+    if(d.ops&&d.ops.length){ entry.ops=d.ops; entry.summary=d.summary||""; if(!entry.content)entry.content="Here's a proposed change:"; }
+    coachMsgs.push(entry); coachRender();
   }catch(e){ coachPending=false; coachMsgs.push({role:"assistant",content:"⚠️ Couldn't reach the coach: "+e.message}); coachRender(); }
 }
-const COACH_SUGGESTS=["Should I do more threshold or intervals?","How are my long runs tracking?","Am I on pace for a good marathon?","What should I focus on this week?"];
+const COACH_SUGGESTS=["Should I do more threshold or intervals?","How are my long runs tracking?","Move this week's long run to Saturday","Add an easy 5k tomorrow"];
 function coachOpen(){
   coachov.classList.add("show");
   if(!coachMsgs.length){
-    coachMsgs.push({role:"assistant",content:"Hi! I'm your coach — I can see your plan and every session you've logged. Ask me about your progress, training balance (like threshold vs intervals), how your long runs are tracking, or what to focus on next."});
+    coachMsgs.push({role:"assistant",content:"Hi! I'm your coach — I can see your plan and every session you've logged. Ask me about your training (progress, threshold vs intervals, how your long runs are tracking) **or just tell me to change the plan** — e.g. \"move Thursday's threshold to Friday\" or \"make tomorrow easier\"."});
     $("#coach-suggests").innerHTML=COACH_SUGGESTS.map(s=>`<button>${s}</button>`).join("");
   }
   coachRender(); setTimeout(()=>coachInput.focus(),60);
@@ -800,6 +738,11 @@ if(COACH_ON){
   $("#coach-close").addEventListener("click",()=>coachov.classList.remove("show"));
   coachov.addEventListener("click",e=>{if(e.target===coachov)coachov.classList.remove("show");});
   $("#coach-suggests").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;coachInput.value=b.textContent;$("#coach-suggests").innerHTML="";coachSend();});
+  coachBody.addEventListener("click",e=>{
+    const ap=e.target.closest("[data-apply]"), di=e.target.closest("[data-dismiss]");
+    if(ap){const m=coachMsgs[+ap.dataset.apply]; if(m&&m.ops){applyOps(m.ops); m.applied=true; coachRender();}}
+    else if(di){const m=coachMsgs[+di.dataset.dismiss]; if(m){m.dismissed=true; coachRender();}}
+  });
   wireDictation(coachInput,$("#coach-mic"),$("#coach-status"),coachSend);
 }
 
@@ -850,7 +793,6 @@ async function boot(){
   const pill=$("#syncpill");
   pill.textContent = SB?"Cloud sync on":"Local only (this device)";
   pill.className="syncpill "+(SB?"ok":"local");
-  if(AI_ON)$("#aibar").classList.add("on");
   try{const r=await fetch("data/activities.json?ts="+Date.now());if(r.ok)ACTIVITIES=await r.json();}catch(e){console.warn("no activities.json yet",e);}
   USER=await loadUser(); USER.planned=USER.planned||{};USER.actuals=USER.actuals||{};USER.notes=USER.notes||{};USER.actNotes=USER.actNotes||{};
   // migrate any legacy day-level notes into the activity-notes map (as day-level keys)
