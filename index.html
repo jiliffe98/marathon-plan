@@ -68,6 +68,23 @@
   .ai-summary{font-size:14px;font-weight:600;line-height:1.4}
   .ai-reply{display:none;margin-top:8px;font-size:13px;font-weight:600;color:var(--harbour);background:var(--harbour-soft);border:1px solid #cfe1ea;border-radius:8px;padding:8px 10px;line-height:1.4}
 
+  /* coach chat */
+  .coachmodal{width:min(560px,100%);height:min(82vh,760px);display:flex;flex-direction:column}
+  .coach-scroll{flex:1;overflow:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px;background:var(--ground)}
+  .cmsg{max-width:86%;padding:9px 12px;border-radius:13px;font-size:14px;line-height:1.45}
+  .cmsg.user{align-self:flex-end;background:var(--harbour);color:#fff;border-bottom-right-radius:4px}
+  .cmsg.coach{align-self:flex-start;background:#fff;border:1px solid var(--line);border-bottom-left-radius:4px}
+  .cmsg.pending{color:var(--muted);font-style:italic}
+  .cmsg p{margin:0 0 7px}.cmsg p:last-child{margin:0}
+  .cmsg ul{margin:5px 0;padding-left:18px}.cmsg li{margin:3px 0}
+  .cmsg b{font-weight:800}
+  .cmsg code{background:var(--harbour-soft);padding:0 4px;border-radius:4px;font-size:12.5px}
+  .coach-inrow{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--line);align-items:center}
+  .coach-inrow input{flex:1;font:inherit;font-size:14px;border:1px solid var(--line);border-radius:9px;padding:9px 11px;min-width:0}
+  .coach-suggests{display:flex;flex-wrap:wrap;gap:6px;padding:0 12px 4px}
+  .coach-suggests button{font:inherit;font-size:11.5px;color:var(--harbour);background:var(--harbour-soft);border:1px solid #cfe1ea;border-radius:14px;padding:4px 10px;cursor:pointer}
+  .coach-suggests button:hover{filter:brightness(.97)}
+
   .weeks{display:flex;flex-direction:column;gap:18px;margin-top:20px}
   .past-label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;color:var(--muted)}
   .week{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
@@ -192,6 +209,7 @@
     <div class="stat">Longest run <b id="s-long">0</b></div>
     <div class="stat">Last Strava sync <b id="s-sync">—</b></div>
     <div class="spacer"></div>
+    <button class="btn" id="coachbtn" style="display:none">💬 Ask coach</button>
     <span class="syncpill" id="syncpill">…</span>
     <button class="btn" id="resync">↻ Resync Strava</button>
     <button class="btn" id="reset">Reset edits</button>
@@ -228,6 +246,23 @@
     <div class="m-foot">
       <button class="btn" id="ai-cancel">Cancel</button>
       <button class="btn primary" id="ai-apply">Apply changes</button>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="coachov">
+  <div class="modal coachmodal" role="dialog" aria-modal="true">
+    <div class="m-head" style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+      <div><h3>Ask your coach</h3><p>Grounded in your plan &amp; Strava sessions</p></div>
+      <button class="btn" id="coach-close">Close</button>
+    </div>
+    <div class="coach-scroll" id="coach-body"></div>
+    <div class="coach-suggests" id="coach-suggests"></div>
+    <div class="ai-status" id="coach-status" style="padding:0 12px;margin:0"></div>
+    <div class="coach-inrow">
+      <input type="text" id="coach-input" placeholder="e.g. More threshold or intervals?">
+      <button class="mic" id="coach-mic" title="Dictate">🎤</button>
+      <button class="btn primary" id="coach-send">Send</button>
     </div>
   </div>
 </div>
@@ -693,6 +728,79 @@ if(AI_ON){
   aiov.addEventListener("click",e=>{if(e.target===aiov)aiClose();});
   wireDictation(aiInput,$("#ai-mic"),aiStatus,aiSuggest);
   wireDictation($("#ai-followup"),$("#ai-mic2"),$("#ai-status2"),aiRefine);
+}
+
+/* ---------- coach chat ---------- */
+const COACH_ON = SB && CFG.COACH;
+const RACE_ISO = "2026-08-30";
+let coachMsgs = [];      // full display history (may start with a greeting)
+let coachPending = false;
+const coachov=$("#coachov"), coachBody=$("#coach-body"), coachInput=$("#coach-input");
+function escapeHtml(s){return (s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function mdLite(s){
+  let h=escapeHtml(s).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/`([^`]+?)`/g,"<code>$1</code>");
+  const lines=h.split(/\n/); let out="",inList=false;
+  for(const line of lines){
+    const m=line.match(/^\s*[-•]\s+(.*)$/);
+    if(m){ if(!inList){out+="<ul>";inList=true;} out+="<li>"+m[1]+"</li>"; }
+    else { if(inList){out+="</ul>";inList=false;} if(line.trim())out+="<p>"+line+"</p>"; }
+  }
+  if(inList)out+="</ul>";
+  return out;
+}
+function coachContext(){
+  const t=todayISO();
+  const weeksToGo=Math.max(0,Math.ceil((new Date(RACE_ISO)-new Date(t))/6.048e8));
+  const plan=PLAN.filter(w=>w.total||w.long).map(w=>({week:w.no,range:w.range,targetKm:w.total||null,targetLong:w.long||null}));
+  const done=[];
+  PLAN.forEach((w,wi)=>isoSeq(w.start).forEach(iso=>{
+    if(iso>t)return;
+    dayActuals(iso).forEach(a=>{ if(!a.done)return;
+      done.push({date:iso,type:a.atype||a.type||actCategory(a),km:(typeof a.km==="number"?a.km:null),note:a.note||null});
+    });
+  }));
+  return {today:t,raceDate:RACE_ISO,weeksToGo,plan,done};
+}
+function coachRender(){
+  coachBody.innerHTML = coachMsgs.map(m=>
+    m.role==="user"
+      ? `<div class="cmsg user">${escapeHtml(m.content)}</div>`
+      : `<div class="cmsg coach">${mdLite(m.content)}</div>`
+  ).join("") + (coachPending?`<div class="cmsg coach pending">Coach is thinking…</div>`:"");
+  coachBody.scrollTop=coachBody.scrollHeight;
+}
+async function coachSend(){
+  const q=coachInput.value.trim(); if(!q||coachPending)return;
+  coachMsgs.push({role:"user",content:q}); coachInput.value=""; coachPending=true; coachRender();
+  // API history must start with a user turn — drop the leading greeting.
+  const hist=coachMsgs.slice(); while(hist.length&&hist[0].role!=="user")hist.shift();
+  try{
+    const r=await fetch(CFG.SUPABASE_URL+"/functions/v1/coach",{method:"POST",
+      headers:{"content-type":"application/json",apikey:CFG.SUPABASE_ANON_KEY,Authorization:"Bearer "+CFG.SUPABASE_ANON_KEY},
+      body:JSON.stringify({messages:hist,context:coachContext()})});
+    const d=await r.json();
+    if(!r.ok||d.error)throw new Error(d.error||("HTTP "+r.status));
+    coachPending=false; coachMsgs.push({role:"assistant",content:d.reply}); coachRender();
+  }catch(e){ coachPending=false; coachMsgs.push({role:"assistant",content:"⚠️ Couldn't reach the coach: "+e.message}); coachRender(); }
+}
+const COACH_SUGGESTS=["Should I do more threshold or intervals?","How are my long runs tracking?","Am I on pace for a good marathon?","What should I focus on this week?"];
+function coachOpen(){
+  coachov.classList.add("show");
+  if(!coachMsgs.length){
+    coachMsgs.push({role:"assistant",content:"Hi! I'm your coach — I can see your plan and every session you've logged. Ask me about your progress, training balance (like threshold vs intervals), how your long runs are tracking, or what to focus on next."});
+    $("#coach-suggests").innerHTML=COACH_SUGGESTS.map(s=>`<button>${s}</button>`).join("");
+  }
+  coachRender(); setTimeout(()=>coachInput.focus(),60);
+}
+if(COACH_ON){
+  const cb=$("#coachbtn"); cb.style.display="";
+  cb.addEventListener("click",coachOpen);
+  $("#coach-send").addEventListener("click",coachSend);
+  coachInput.addEventListener("keydown",e=>{if(e.key==="Enter")coachSend();});
+  $("#coach-close").addEventListener("click",()=>coachov.classList.remove("show"));
+  coachov.addEventListener("click",e=>{if(e.target===coachov)coachov.classList.remove("show");});
+  $("#coach-suggests").addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;coachInput.value=b.textContent;$("#coach-suggests").innerHTML="";coachSend();});
+  wireDictation(coachInput,$("#coach-mic"),$("#coach-status"),coachSend);
 }
 
 /* ---------- Strava resync ---------- */

@@ -7,5 +7,6 @@ window.CONFIG = {
   SUPABASE_URL: "https://uflqqcmlelbcawnldwem.supabase.co",
   SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVmbHFxY21sZWxiY2F3bmxkd2VtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI3OTIxNjMsImV4cCI6MjA5ODM2ODE2M30.W_OkS0b5um4fY8kJLTgFE7mvREdEdj7Bz1m5Qfpj8MQ",
   STATE_ID: "jeremiah",      // any label; identifies your row of edits
-  AI_EDIT: true              // nlplan Edge Function is deployed
+  AI_EDIT: true,             // nlplan Edge Function is deployed
+  COACH: true                // coach Edge Function is deployed (chat about your training)
 };
