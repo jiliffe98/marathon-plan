@@ -10,6 +10,10 @@ on:
         description: "Print lap breakdown for this YYYY-MM-DD (diagnostic)"
         required: false
         default: ""
+      days_back:
+        description: "One-off: how many days back to sync (blank = default 21)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -30,6 +34,7 @@ jobs:
           STRAVA_CLIENT_SECRET: ${{ secrets.STRAVA_CLIENT_SECRET }}
           STRAVA_REFRESH_TOKEN: ${{ secrets.STRAVA_REFRESH_TOKEN }}
           DEBUG_LAPS: ${{ github.event.inputs.debug_date }}
+          DAYS_BACK_OVERRIDE: ${{ github.event.inputs.days_back }}
         run: python scripts/strava_sync.py
 
       - name: Commit updated data

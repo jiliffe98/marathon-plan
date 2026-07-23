@@ -133,8 +133,15 @@ def categorise(act, laps):
 
 def main():
     token = access_token()
-    after = int((datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=DAYS_BACK)).timestamp())
-    acts = get("/athlete/activities", token, after=after, per_page=100)
+    days_back = int(os.environ.get("DAYS_BACK_OVERRIDE") or DAYS_BACK)   # one-off widen via workflow input
+    now = datetime.datetime.now(datetime.timezone.utc)
+    after_date = (now - datetime.timedelta(days=days_back)).strftime("%Y-%m-%d")
+    # Align the Strava `after` cutoff to MIDNIGHT of after_date so every activity
+    # on that date is BOTH re-fetched and rewritten. (Using now-minus-N-days as a
+    # mid-day timestamp could delete a boundary day's activity — deletion below is
+    # by date string — without re-fetching it, silently dropping it from history.)
+    after = int(datetime.datetime.strptime(after_date, "%Y-%m-%d").replace(tzinfo=datetime.timezone.utc).timestamp())
+    acts = get("/athlete/activities", token, after=after, per_page=200)
 
     data = {}
     if OUT.exists():
@@ -143,7 +150,6 @@ def main():
     # Rebuild every in-window date from this pull (so each day holds ALL its
     # activities, and edits/deletes on Strava are reflected). Each date maps to
     # a LIST of activities.
-    after_date = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=DAYS_BACK)).strftime("%Y-%m-%d")
     for k in list(data):
         if k[:1].isdigit() and k >= after_date:
             del data[k]
