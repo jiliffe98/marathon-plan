@@ -511,7 +511,15 @@
       "done": true,
       "sport": "ride",
       "id": "19506767875"
+    },
+    {
+      "km": 0.2,
+      "type": "Easy",
+      "note": "6:04/km",
+      "done": true,
+      "sport": "run",
+      "id": "19512020038"
     }
   ],
-  "_synced_at": "2026-07-29T07:38:58Z"
+  "_synced_at": "2026-07-29T10:33:12Z"
 }
