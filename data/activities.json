@@ -529,7 +529,15 @@
       "done": true,
       "sport": "other",
       "id": "19521181396"
+    },
+    {
+      "km": 8.0,
+      "type": "Easy",
+      "note": "5:57/km",
+      "done": true,
+      "sport": "run",
+      "id": "19523280123"
     }
   ],
-  "_synced_at": "2026-07-30T02:06:49Z"
+  "_synced_at": "2026-07-30T05:33:33Z"
 }
