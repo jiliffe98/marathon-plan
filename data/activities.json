@@ -227,6 +227,15 @@
   ],
   "2026-07-07": [
     {
+      "km": 7.9,
+      "type": "Threshold",
+      "note": "6km @ 4:55",
+      "done": true,
+      "sport": "run",
+      "id": "19206730959",
+      "_source": "garmin-backfill"
+    },
+    {
       "km": null,
       "type": "Strength",
       "note": "68 min",
@@ -237,12 +246,43 @@
   ],
   "2026-07-09": [
     {
+      "km": 7.2,
+      "type": "Intervals",
+      "note": "3x800m @4:29-5:01 + 3x400m @4:02-4:33",
+      "done": true,
+      "sport": "run",
+      "id": "19235291737",
+      "_source": "garmin-backfill"
+    },
+    {
       "km": null,
       "type": "Strength",
       "note": "36 min",
       "done": true,
       "sport": "strength",
       "id": "19239696383"
+    }
+  ],
+  "2026-07-10": [
+    {
+      "km": 8.2,
+      "type": "Easy",
+      "note": "5:20/km",
+      "done": true,
+      "sport": "run",
+      "id": "19248791111",
+      "_source": "garmin-backfill"
+    }
+  ],
+  "2026-07-11": [
+    {
+      "km": 30.0,
+      "type": "Long",
+      "note": "5:40/km",
+      "done": true,
+      "sport": "run",
+      "id": "19262799435",
+      "_source": "garmin-backfill"
     }
   ],
   "2026-07-14": [
