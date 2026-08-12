@@ -315,22 +315,6 @@
   ],
   "2026-07-22": [
     {
-      "km": 38.0,
-      "type": "Ride",
-      "note": "38.0 km ride",
-      "done": true,
-      "sport": "ride",
-      "id": "19409705227"
-    },
-    {
-      "km": 2.5,
-      "type": "Ride",
-      "note": "2.5 km ride",
-      "done": true,
-      "sport": "ride",
-      "id": "19410039166"
-    },
-    {
       "km": 10.1,
       "type": "Easy",
       "note": "6:15/km",
@@ -587,5 +571,5 @@
       "id": "19661607010"
     }
   ],
-  "_synced_at": "2026-08-11T23:33:21Z"
+  "_synced_at": "2026-08-12T01:19:48Z"
 }
