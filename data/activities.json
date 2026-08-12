@@ -579,7 +579,15 @@
       "done": true,
       "sport": "run",
       "id": "19706484823"
+    },
+    {
+      "km": 6.2,
+      "type": "Ride",
+      "note": "6.2 km ride",
+      "done": true,
+      "sport": "ride",
+      "id": "19707103842"
     }
   ],
-  "_synced_at": "2026-08-12T07:14:54Z"
+  "_synced_at": "2026-08-12T09:05:53Z"
 }
