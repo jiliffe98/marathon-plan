@@ -136,11 +136,15 @@ def main():
     days_back = int(os.environ.get("DAYS_BACK_OVERRIDE") or DAYS_BACK)   # one-off widen via workflow input
     now = datetime.datetime.now(datetime.timezone.utc)
     after_date = (now - datetime.timedelta(days=days_back)).strftime("%Y-%m-%d")
-    # Align the Strava `after` cutoff to MIDNIGHT of after_date so every activity
-    # on that date is BOTH re-fetched and rewritten. (Using now-minus-N-days as a
-    # mid-day timestamp could delete a boundary day's activity — deletion below is
-    # by date string — without re-fetching it, silently dropping it from history.)
-    after = int(datetime.datetime.strptime(after_date, "%Y-%m-%d").replace(tzinfo=datetime.timezone.utc).timestamp())
+    # Strava's `after` filters on the activity's UTC start time, but we key and
+    # delete by its LOCAL date. In UTC+10/+11 a run starting before 10am local
+    # carries the PREVIOUS UTC day, so a UTC-midnight cutoff excludes it from the
+    # fetch while the delete below still removes it -> silent, permanent loss of
+    # every early-morning session once it aged past the window. Fetch two extra
+    # days so everything in the delete window is guaranteed to come back.
+    after = int((datetime.datetime.strptime(after_date, "%Y-%m-%d")
+                 .replace(tzinfo=datetime.timezone.utc)
+                 - datetime.timedelta(days=2)).timestamp())
     acts = get("/athlete/activities", token, after=after, per_page=200)
 
     data = {}
@@ -150,6 +154,15 @@ def main():
     # Rebuild every in-window date from this pull (so each day holds ALL its
     # activities, and edits/deletes on Strava are reflected). Each date maps to
     # a LIST of activities.
+    # Manually restored entries are tagged; keep them so a rebuild can't wipe them.
+    manual = {}
+    for k, v in data.items():
+        if not k[:1].isdigit():
+            continue
+        keep = [e for e in (v if isinstance(v, list) else [v]) if e.get("_source")]
+        if keep:
+            manual[k] = keep
+
     for k in list(data):
         if k[:1].isdigit() and k >= after_date:
             del data[k]
@@ -197,6 +210,15 @@ def main():
         fresh.setdefault(date, []).append(entry)
 
     data.update(fresh)
+
+    # Re-attach manual entries Strava didn't return (dedup by activity id).
+    for k, entries in manual.items():
+        cur = data.get(k) or []
+        have = {str(e.get("id")) for e in cur}
+        add = [e for e in entries if str(e.get("id")) not in have]
+        if add:
+            data[k] = add + cur
+            print(f"  kept {len(add)} manual entry(ies) on {k}")
     data["_synced_at"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     OUT.write_text(json.dumps(dict(sorted(data.items())), indent=2) + "\n")
     days = sum(1 for k in data if k[:1].isdigit())
