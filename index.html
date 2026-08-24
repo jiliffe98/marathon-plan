@@ -761,16 +761,28 @@ async function reloadActivities(){try{const r=await fetch("data/activities.json?
 const reBtn=$("#resync"), syncMsg=$("#sync-msg");
 reBtn.addEventListener("click",async()=>{
   reBtn.disabled=true; const label=reBtn.textContent; reBtn.textContent="Syncing…";
-  setS(syncMsg,"Asking Strava for your latest activities…");
   const prev=(ACTIVITIES&&ACTIVITIES._synced_at)||"";
-  let triggered=false, err="";
+  // Offline: the service worker will happily serve cached activities, so say that
+  // plainly instead of implying we refreshed anything.
+  if(!navigator.onLine){
+    await reloadActivities(); render(); setLastSync();
+    setS(syncMsg,"You're offline — showing your last saved plan. Reconnect and tap Resync again.",true);
+    reBtn.textContent=label; reBtn.disabled=false; return;
+  }
+  setS(syncMsg,"Asking Strava for your latest activities…");
+  let triggered=false, err="", netFail=false;
   if(SB){
-    try{
-      const r=await fetch(CFG.SUPABASE_URL+"/functions/v1/resync",{method:"POST",headers:{apikey:CFG.SUPABASE_ANON_KEY,Authorization:"Bearer "+CFG.SUPABASE_ANON_KEY}});
-      const d=await r.json().catch(()=>({}));
-      if(r.ok&&d.ok)triggered=true; else err=d.error||("HTTP "+r.status);
-    }catch(e){err=e.message;}
-  }else err="cloud sync not configured";
+    for(let attempt=0;attempt<2 && !triggered;attempt++){
+      try{
+        const r=await fetch(CFG.SUPABASE_URL+"/functions/v1/resync",{method:"POST",cache:"no-store",
+          headers:{apikey:CFG.SUPABASE_ANON_KEY,Authorization:"Bearer "+CFG.SUPABASE_ANON_KEY}});
+        const d=await r.json().catch(()=>({}));
+        if(r.ok&&d.ok){triggered=true;}
+        else{err=d.error||("HTTP "+r.status);netFail=false;break;}
+      }catch(e){ netFail=true; err=e.message||String(e);
+        if(attempt===0)await new Promise(res=>setTimeout(res,1200)); }
+    }
+  }else{err="cloud sync not configured";}
   if(triggered){
     let updated=false;
     for(let i=0;i<22;i++){
@@ -783,7 +795,9 @@ reBtn.addEventListener("click",async()=>{
     setS(syncMsg, updated?"Strava sync complete.":"Sync started — it'll refresh within a minute; you can keep using the app.");
   }else{
     await reloadActivities(); render(); setLastSync();
-    setS(syncMsg,"Refreshed the latest data, but couldn't start a fresh Strava pull"+(err?" ("+err+")":"")+".",true);
+    setS(syncMsg, netFail
+      ? "Couldn't reach the sync service — showing your last saved plan. Usually a network block: corporate wifi/VPN, or a browser extension blocking supabase.co."
+      : "Couldn't start a fresh Strava pull"+(err?" ("+err+")":"")+" — showing your last saved plan.", true);
   }
   reBtn.textContent=label; reBtn.disabled=false;
 });
