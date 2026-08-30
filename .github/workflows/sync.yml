@@ -14,6 +14,10 @@ on:
         description: "One-off: how many days back to sync (blank = default 21)"
         required: false
         default: ""
+      debug_splits:
+        description: "Print per-km Strava splits for this date or activity id (diagnostic)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -35,6 +39,7 @@ jobs:
           STRAVA_REFRESH_TOKEN: ${{ secrets.STRAVA_REFRESH_TOKEN }}
           DEBUG_LAPS: ${{ github.event.inputs.debug_date }}
           DAYS_BACK_OVERRIDE: ${{ github.event.inputs.days_back }}
+          DEBUG_SPLITS: ${{ github.event.inputs.debug_splits }}
         run: python scripts/strava_sync.py
 
       - name: Commit updated data

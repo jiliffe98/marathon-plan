@@ -196,6 +196,21 @@ def main():
                 for l in laps:
                     if l.get("distance", 0) >= 100:
                         print(f"      lap {round(l['distance']):>5}m  {mmss(pace_per_km(l['distance'], l['moving_time']))}/km")
+            # Per-kilometre splits (Strava exposes these on the detail endpoint;
+            # Garmin's API only gives manually-pressed laps). Diagnostic only.
+            if os.environ.get("DEBUG_SPLITS") in (date, str(a.get("id")), "all"):
+                try:
+                    det = get(f"/activities/{a['id']}", token)
+                    print(f"      --- per-km splits for {a.get('id')} ---")
+                    for sp in (det.get("splits_metric") or []):
+                        dm = sp.get("distance") or 0
+                        mt = sp.get("moving_time") or 0
+                        hr = sp.get("average_heartrate")
+                        ed = sp.get("elevation_difference")
+                        print(f"      km {sp.get('split'):>2} {dm:7.1f}m {mmss(pace_per_km(dm, mt)):>7}/km "
+                              f"HR {('%.0f' % hr) if hr is not None else '-':>4} elev {ed}")
+                except Exception as e:
+                    print(f"      (splits fetch failed: {e})")
         elif sport == "ride":
             entry = {"km": km, "type": "Ride", "note": f"{km} km ride", "done": True, "sport": "ride"}
             print(f"  {date}  Ride       {km:>5} km")
