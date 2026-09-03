@@ -1,13 +1,13 @@
 {
-  "name": "Sub-20 5k Block",
-  "short_name": "Block",
-  "description": "Twelve-week 5k block on the road to a sub-3 marathon — Strava synced, editable, offline-ready.",
+  "name": "Sydney Marathon 2026 (record)",
+  "short_name": "Marathon 26",
+  "description": "Archived record of the Sydney Marathon 2026 training block.",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f7f8fa",
-  "theme_color": "#12557f",
+  "theme_color": "#15688a",
   "icons": [
     { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },

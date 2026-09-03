@@ -202,7 +202,7 @@ def main():
             except Exception:
                 laps = []
             label, note = categorise(a, laps)
-            entry = {"km": km, "type": label, "note": note, "done": True, "sport": "run"}
+            entry = {"km": km, "type": label, "note": note, "done": True, "sport": "run", "mins": mins}
             print(f"  {date}  {label:10} {km:>5} km  ({note})")
             if os.environ.get("DEBUG_LAPS") in (date, "all"):  # temp diagnostic
                 for l in laps:
@@ -224,8 +224,15 @@ def main():
                 except Exception as e:
                     print(f"      (splits fetch failed: {e})")
         elif sport == "ride":
-            entry = {"km": km, "type": "Ride", "note": f"{km} km ride", "done": True, "sport": "ride"}
-            print(f"  {date}  Ride       {km:>5} km")
+            w   = a.get("average_watts")
+            npw = a.get("weighted_average_watts")
+            bits = [f"{km} km", f"{mins} min"]
+            if npw:  bits.append(f"NP {int(npw)} W")
+            elif w:  bits.append(f"{int(w)} W")
+            entry = {"km": km, "type": "Ride", "note": " · ".join(bits), "done": True, "sport": "ride", "mins": mins}
+            if w:   entry["watts"] = int(w)
+            if npw: entry["np"] = int(npw)
+            print(f"  {date}  Ride       {km:>5} km  {mins:>4} min" + (f"  NP {int(npw)} W" if npw else ""))
         elif sport == "strength":
             entry = {"km": None, "type": "Strength", "note": f"{mins} min", "done": True, "sport": "strength"}
             print(f"  {date}  Strength   {mins:>4} min")

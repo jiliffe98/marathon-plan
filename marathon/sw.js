@@ -1,10 +1,11 @@
-/* Service worker for the training-block app (root).
+/* Service worker for the Sydney Marathon Training Plan.
    Strategy: network-first for everything same-origin, falling back to cache when
-   offline. Content changes often (hourly Strava sync), so fresh wins whenever
-   there's a connection; the cached shell lets you read the plan with no signal.
-   Cross-origin requests (Supabase, Edge Functions) bypass the SW entirely.
-   The archived marathon app under /marathon/ has its own worker and cache. */
-const CACHE = "block1-v1";
+   offline. This keeps the app fresh whenever there's a connection (important —
+   GitHub Pages + hourly Strava sync means content changes often) while still
+   letting you open and read the plan with no signal (e.g. mid-run).
+   Cross-origin requests (Supabase reads/writes, Edge Functions) bypass the SW
+   and always go to the network. */
+const CACHE = "marathon-record-v1";
 const SHELL = [
   "./",
   "index.html",
@@ -21,7 +22,7 @@ self.addEventListener("install", (e) => {
   e.waitUntil(
     caches.open(CACHE)
       .then((c) => c.addAll(SHELL.map((u) => new Request(u, { cache: "reload" }))))
-      .catch(() => {})
+      .catch(() => {})       // a missing asset shouldn't block install
       .then(() => self.skipWaiting())
   );
 });
@@ -54,10 +55,7 @@ async function networkFirst(req) {
 
 self.addEventListener("fetch", (e) => {
   const req = e.request;
-  if (req.method !== "GET") return;
-  const url = new URL(req.url);
-  if (url.origin !== self.location.origin) return;
-  // leave the archived app to its own worker
-  if (url.pathname.includes("/marathon/")) return;
+  if (req.method !== "GET") return;                 // never touch writes
+  if (new URL(req.url).origin !== self.location.origin) return; // Supabase etc. → network
   e.respondWith(networkFirst(req));
 });
