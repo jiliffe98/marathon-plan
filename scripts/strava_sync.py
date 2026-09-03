@@ -145,7 +145,19 @@ def main():
     after = int((datetime.datetime.strptime(after_date, "%Y-%m-%d")
                  .replace(tzinfo=datetime.timezone.utc)
                  - datetime.timedelta(days=2)).timestamp())
-    acts = get("/athlete/activities", token, after=after, per_page=200)
+    # Page through the list. A single per_page=200 call silently truncates on a
+    # wide backfill -- and since we DELETE the whole window before rebuilding,
+    # a truncated fetch would destroy the days it failed to return.
+    acts, page = [], 1
+    while True:
+        batch = get("/athlete/activities", token, after=after, per_page=200, page=page)
+        if not batch:
+            break
+        acts += batch
+        if len(batch) < 200:
+            break
+        page += 1
+    print(f"fetched {len(acts)} activities since {after_date} (minus 2d margin)")
 
     data = {}
     if OUT.exists():
