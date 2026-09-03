@@ -756,14 +756,18 @@
       "note": "6:00/km",
       "done": true,
       "sport": "run",
+      "mins": 2,
       "id": "19706484823"
     },
     {
       "km": 6.2,
       "type": "Ride",
-      "note": "6.2 km ride",
+      "note": "6.2 km \u00b7 17 min \u00b7 NP 167 W",
       "done": true,
       "sport": "ride",
+      "mins": 17,
+      "watts": 133,
+      "np": 167,
       "id": "19707103842"
     }
   ],
@@ -774,6 +778,7 @@
       "note": "5:45/km",
       "done": true,
       "sport": "run",
+      "mins": 29,
       "id": "19717141532"
     }
   ],
@@ -784,6 +789,7 @@
       "note": "5:01/km",
       "done": true,
       "sport": "run",
+      "mins": 50,
       "id": "19731994374"
     }
   ],
@@ -794,6 +800,7 @@
       "note": "5:59/km",
       "done": true,
       "sport": "run",
+      "mins": 39,
       "id": "19760027359"
     }
   ],
@@ -804,6 +811,7 @@
       "note": "5:51/km",
       "done": true,
       "sport": "run",
+      "mins": 43,
       "id": "19775061516"
     }
   ],
@@ -814,6 +822,7 @@
       "note": "5:54/km",
       "done": true,
       "sport": "run",
+      "mins": 31,
       "id": "19815366349"
     }
   ],
@@ -824,6 +833,7 @@
       "note": "4:57/km",
       "done": true,
       "sport": "run",
+      "mins": 26,
       "id": "19831861152"
     }
   ],
@@ -834,6 +844,7 @@
       "note": "4.7km @ 5:13",
       "done": true,
       "sport": "run",
+      "mins": 76,
       "id": "19844111910"
     }
   ],
@@ -841,9 +852,12 @@
     {
       "km": 71.4,
       "type": "Ride",
-      "note": "71.4 km ride",
+      "note": "71.4 km \u00b7 244 min \u00b7 NP 153 W",
       "done": true,
       "sport": "ride",
+      "mins": 244,
+      "watts": 111,
+      "np": 153,
       "id": "19859060322"
     }
   ],
@@ -854,6 +868,7 @@
       "note": "5:38/km",
       "done": true,
       "sport": "run",
+      "mins": 30,
       "id": "19874355345"
     }
   ],
@@ -864,6 +879,7 @@
       "note": "4:57/km",
       "done": true,
       "sport": "run",
+      "mins": 26,
       "id": "19899778702"
     }
   ],
@@ -874,6 +890,7 @@
       "note": "5:39/km",
       "done": true,
       "sport": "run",
+      "mins": 26,
       "id": "19929372193"
     }
   ],
@@ -884,8 +901,9 @@
       "note": "5:08/km",
       "done": true,
       "sport": "run",
+      "mins": 220,
       "id": "19956400930"
     }
   ],
-  "_synced_at": "2026-09-03T07:37:03Z"
+  "_synced_at": "2026-09-03T07:38:34Z"
 }
