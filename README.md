@@ -26,7 +26,6 @@ Two apps in one repo, sharing one Strava sync and one Supabase project.
 | `.github/workflows/sync.yml` | hourly cron + manual dispatch (`days_back`, `debug_date`, `debug_splits` inputs) |
 | `supabase/functions/coach` | Claude coach. Block-agnostic — the client sends `context.block` (goal, paces, zones, rules) |
 | `supabase/functions/resync` | "↻ Resync Strava" button → dispatches the sync workflow (`GITHUB_TOKEN` secret, Actions:write on this repo only) |
-| `supabase/functions/nlplan` | legacy plan editor, superseded by `coach`; not called by either app |
 | `supabase_schema.sql` | the one table: `training_state(id text pk, data jsonb)` |
 
 ## Starting the next block (when this one is done)
