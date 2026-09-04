@@ -168,6 +168,8 @@
   .c-grey{background:#eef0f3;color:#5a6470}
   .c-str{background:var(--str-soft);color:var(--str)}
   .c-ride{background:#e9eff5;color:#3a5f7d}
+  .c-swim{background:#e2f1f4;color:#1c6b78}
+  .chip.opt{border:1px dashed currentColor;opacity:.8}
   .chip.done-chip{display:block;padding:0;cursor:pointer}
   .chip.done-chip.c-green{box-shadow:inset 0 0 0 1px var(--good)}
   .chip.done-chip.c-grey{box-shadow:inset 0 0 0 1px #c4ccd4}
@@ -240,6 +242,7 @@
     <div class="stat">Runs <b id="s-runs">0</b></div>
     <div class="stat">Rides <b id="s-rides">0</b></div>
     <div class="stat">Strength <b id="s-str">0</b></div>
+    <div class="stat">Swims <b id="s-swims">0</b></div>
     <div class="stat">Last sync <b id="s-sync">—</b></div>
     <div class="spacer"></div>
     <button class="btn" id="coachbtn" style="display:none">💬 Coach</button>
@@ -415,6 +418,7 @@ const FTPTEST=B("FTP test 20 min",60,"20 min warm-up + 2 openers · 20 min ALL O
 const SA=S("Strength A","loaded · split squat · RDL · calf raises (straight + bent) · side plank");
 const SB2=S("Strength B","control · step-downs · band walks · SL calf · Nordics (ramp slowly) · Copenhagen");
 const SA_L=S("Strength A · light","race week · two sets, no new load");
+const SW=()=>({a:"Swim · 20 min",sport:"swim",mins:20,slot:"PM",opt:true,d:"Optional · 20 min technique BEFORE the gym · one of: stroke-rate 8×50 @ 32–34 spm · catch drills 6×(25 drill + 25 swim) · 12×25 fast in threes · never a hard aerobic swim"});
 const LR=(km,d)=>R("Long run",km,"AM",d||"easy · 6 strides to finish");
 const EZ=(km,slot,d)=>R("Easy",km,slot||"AM",d);
 const EZS=(km,d)=>R("Easy + strides",km,"AM",d||"easy, then 6×20s relaxed fast");
@@ -428,30 +432,30 @@ const PLAN=[
   {no:0,lab:"REC 2",range:"7 – 13 Sep",tag:"Recovery · easy running returns",start:"2026-09-07",phase:"rec",total:34,long:null,days:[
     [EZ(6)],[EZ(7)],[EZRIDE,EZ(7,"PM")],[REST],[EZ(6)],[EZ(8)],[EZRIDE]]},
   {no:1,range:"14 – 20 Sep",tag:"Base · no quality yet · book the DEXA this week",start:"2026-09-14",phase:"base",total:40,long:12,days:[
-    [EZS(7)],[EZS(8,"still 3 weeks post-marathon — easy, then strides"),SA],[SPIN,EZ(7,"PM")],[SB2],[SS,EZ(6,"PM","optional")],[LR(12)],[LONGRIDE]]},
+    [EZS(7)],[EZS(8,"still 3 weeks post-marathon — easy, then strides"),SW(),SA],[SPIN,EZ(7,"PM")],[SW(),SB2],[SS,EZ(6,"PM","optional")],[LR(12)],[LONGRIDE]]},
   {no:2,range:"21 – 27 Sep",tag:"Base · hills begin · bodyweight strength",start:"2026-09-21",phase:"base",total:46,long:14,days:[
-    [EZS(7)],[R("Hills 6×45s",9,"AM","5–8% grade · 5k effort · WALK down · 2 km w/u + c/d"),SA],[SPIN,EZ(8,"PM")],[SB2],[SS,EZ(8,"PM","optional")],[LR(14)],[LONGRIDE]]},
+    [EZS(7)],[R("Hills 6×45s",9,"AM","5–8% grade · 5k effort · WALK down · 2 km w/u + c/d"),SW(),SA],[SPIN,EZ(8,"PM")],[SW(),SB2],[SS,EZ(8,"PM","optional")],[LR(14)],[LONGRIDE]]},
   {no:3,range:"28 Sep – 4 Oct",tag:"Base · first tempo · start deficit + load",start:"2026-09-28",phase:"base",total:52,long:16,days:[
-    [EZS(8)],[R("Hills 8×45s",10,"AM","walk down · add load in the gym from this week"),SA],[SPIN,EZ(8,"PM")],[R("Tempo 12 min",10,"AM","@ 4:38 · comfortably hard"),SB2],[SS],[LR(16)],[LONGRIDE]]},
+    [EZS(8)],[R("Hills 8×45s",10,"AM","walk down · add load in the gym from this week"),SW(),SA],[SPIN,EZ(8,"PM")],[R("Tempo 12 min",10,"AM","@ 4:38 · comfortably hard"),SW(),SB2],[SS],[LR(16)],[LONGRIDE]]},
   {no:4,range:"5 – 11 Oct",tag:"Down week · FTP test Friday",start:"2026-10-05",phase:"down",total:48,long:12,days:[
-    [EZS(8,"easy, then 8×20s")],[EZS(9,"easy, then 8×20s"),SA],[SPIN,EZ(9,"PM")],[R("Tempo 12 min",10,"AM","@ 4:38"),SB2],[FTPTEST],[LR(12)],[LONGRIDE]]},
+    [EZS(8,"easy, then 8×20s")],[EZS(9,"easy, then 8×20s"),SW(),SA],[SPIN,EZ(9,"PM")],[R("Tempo 12 min",10,"AM","@ 4:38"),SW(),SB2],[FTPTEST],[LR(12)],[LONGRIDE]]},
   {no:5,range:"12 – 18 Oct",tag:"Threshold · VO2 reps begin",start:"2026-10-12",phase:"thr",total:60,long:17,days:[
-    [EZS(8)],[R("Intervals 5×800",11,"AM","@ 4:15/km (3:24 per rep) · 2 min jog · last two match the first two"),SA],[SPIN,EZ(9,"PM")],[R("Threshold 2×10 min",11,"AM","@ 4:35 · 2 min jog"),SB2],[SS,EZ(4,"PM","optional")],[LR(17)],[LONGRIDE]]},
+    [EZS(8)],[R("Intervals 5×800",11,"AM","@ 4:15/km (3:24 per rep) · 2 min jog · last two match the first two"),SW(),SA],[SPIN,EZ(9,"PM")],[R("Threshold 2×10 min",11,"AM","@ 4:35 · 2 min jog"),SW(),SB2],[SS,EZ(4,"PM","optional")],[LR(17)],[LONGRIDE]]},
   {no:6,range:"19 – 25 Oct",tag:"Threshold · 4×5 heavier in the gym",start:"2026-10-19",phase:"thr",total:66,long:16,days:[
-    [EZS(9)],[R("Intervals 6×800",12,"AM","@ 4:15 · 90s jog"),SA],[SPIN,EZ(9,"PM")],[R("Threshold 4×6 min",12,"AM","@ threshold · 90s jog"),SB2],[SS,EZ(8,"PM","optional")],[LR(16)],[LONGRIDE]]},
+    [EZS(9)],[R("Intervals 6×800",12,"AM","@ 4:15 · 90s jog"),SW(),SA],[SPIN,EZ(9,"PM")],[R("Threshold 4×6 min",12,"AM","@ threshold · 90s jog"),SW(),SB2],[SS,EZ(8,"PM","optional")],[LR(16)],[LONGRIDE]]},
   {no:7,range:"26 Oct – 1 Nov",tag:"Benchmark week · Monday double",start:"2026-10-26",phase:"thr",total:68,long:12,days:[
-    [EZS(9),DBL],[R("Intervals 4×1k",11,"AM","@ 5k pace · 3 min jog · a sharpener before Saturday, not a full session"),SA],[SPIN,EZ(9,"PM")],[EZS(8),SB2],[EZSPIN,EZ(6,"PM","short, easy")],
+    [EZS(9),DBL],[R("Intervals 4×1k",11,"AM","@ 5k pace · 3 min jog · a sharpener before Saturday, not a full session"),SW(),SA],[SPIN,EZ(9,"PM")],[EZS(8),SW(),SB2],[EZSPIN,EZ(6,"PM","short, easy")],
     [R("Benchmark · parkrun 5k",9,"AM","FULL EFFORT · 2 km w/u + 2 km c/d · every pace in the block recalibrates from this")],[LR(12,"easy · after yesterday · no ride today")]]},
   {no:8,range:"2 – 8 Nov",tag:"Down week · new paces from the benchmark · deficit ends",start:"2026-11-02",phase:"down",total:58,long:15,days:[
-    [EZS(8)],[R("Reps 8×400",10,"AM","@ new 5k pace · 90s jog"),SA],[SPIN,EZ(9,"PM")],[R("Tempo 15 min",10,"AM","@ new threshold"),SB2],[SS,EZ(6,"PM","optional")],[LR(15,"easy")],[LONGRIDE]]},
+    [EZS(8)],[R("Reps 8×400",10,"AM","@ new 5k pace · 90s jog"),SW(),SA],[SPIN,EZ(9,"PM")],[R("Tempo 15 min",10,"AM","@ new threshold"),SW(),SB2],[SS,EZ(6,"PM","optional")],[LR(15,"easy")],[LONGRIDE]]},
   {no:9,range:"9 – 15 Nov",tag:"Peak · 76 km · bike is cut first if the load bites",start:"2026-11-09",phase:"vo2",total:76,long:17,days:[
-    [EZS(10),DBL],[R("Intervals 5×1k",13,"AM","@ 5k pace · 3 min jog"),SA],[SPIN,EZ(10,"PM")],[R("Cruise 5×1k",13,"AM","@ threshold · 60s jog · short recoveries are the point"),SB2],[SS,EZ(9,"PM")],[LR(17)],[LONGRIDE]]},
+    [EZS(10),DBL],[R("Intervals 5×1k",13,"AM","@ 5k pace · 3 min jog"),SW(),SA],[SPIN,EZ(10,"PM")],[R("Cruise 5×1k",13,"AM","@ threshold · 60s jog · short recoveries are the point"),SW(),SB2],[SS,EZ(9,"PM")],[LR(17)],[LONGRIDE]]},
   {no:10,range:"16 – 22 Nov",tag:"Peak · 74 km · maintain in the gym, do not build",start:"2026-11-16",phase:"vo2",total:74,long:16,days:[
-    [EZS(10),DBL],[R("Reps 12×400",12,"AM","@ 400s pace (~3:55) · 90s jog"),SA],[SPIN,EZ(10,"PM")],[R("Tempo 20 min",13,"AM","continuous @ threshold"),SB2],[SS,EZ(9,"PM")],[LR(16)],[LONGRIDE]]},
+    [EZS(10),DBL],[R("Reps 12×400",12,"AM","@ 400s pace (~3:55) · 90s jog"),SW(),SA],[SPIN,EZ(10,"PM")],[R("Tempo 20 min",13,"AM","continuous @ threshold"),SW(),SB2],[SS,EZ(9,"PM")],[LR(16)],[LONGRIDE]]},
   {no:11,range:"23 – 29 Nov",tag:"Sharpen",start:"2026-11-23",phase:"vo2",total:58,long:16,days:[
-    [EZS(8)],[R("Reps 8×400",10,"AM","@ 400s pace · 90s jog"),SA],[SPIN,EZ(8,"PM")],[R("Threshold 2×8 min",10,"AM","@ threshold"),SB2],[SS,EZ(6,"PM","optional")],[LR(16)],[LONGRIDE]]},
+    [EZS(8)],[R("Reps 8×400",10,"AM","@ 400s pace · 90s jog"),SW(),SA],[SPIN,EZ(8,"PM")],[R("Threshold 2×8 min",10,"AM","@ threshold"),SW(),SB2],[SS,EZ(6,"PM","optional")],[LR(16)],[LONGRIDE]]},
   {no:12,range:"30 Nov – 6 Dec",tag:"Race week",start:"2026-11-30",phase:"race",total:36,long:null,days:[
-    [EZS(6,"easy, then 6×20s")],[R("Reps 6×400",8,"AM","@ GOAL pace 4:00/km (96s) · 90s jog · feel fast, stop fresh"),SA_L],[SPIN,EZ(6,"PM")],[EZS(7,"easy, then 4 strides")],[REST],
+    [EZS(6,"easy, then 6×20s")],[R("Reps 6×400",8,"AM","@ GOAL pace 4:00/km (96s) · 90s jog · feel fast, stop fresh"),SW(),SA_L],[SPIN,EZ(6,"PM")],[EZS(7,"easy, then 4 strides")],[REST],
     [{a:"RACE · parkrun 5k",km:9,sport:"run",slot:"AM",d:"2 km w/u with 3 openers · race · 1.5 km c/d · go out at 4:00, not faster",race:true}],[EZSPIN]]},
 ];
 function defaultPlanned(c){return JSON.parse(JSON.stringify(c.days));}
@@ -497,7 +501,7 @@ function dayActuals(iso){
   return out;
 }
 function chipCategory(p){if(p.sport)return p.sport==="rest"?"other":p.sport;const tc=typeClass(p.a);if(tc==="t-ride")return"ride";if(tc==="t-str")return"strength";if(tc==="t-rest")return"other";return"run";}
-function actCategory(a){if(a.sport==="ride")return"ride";if(a.sport==="strength")return"strength";if(a.sport==="other")return"other";const tc=typeClass(a.atype||a.type||"");if(tc==="t-ride")return"ride";if(tc==="t-str")return"strength";return"run";}
+function actCategory(a){if(a.sport==="ride")return"ride";if(a.sport==="swim")return"swim";if(a.sport==="strength")return"strength";if(a.sport==="other")return"other";const tc=typeClass(a.atype||a.type||"");if(tc==="t-ride")return"ride";if(tc==="t-str")return"strength";return"run";}
 function actRunKm(a){return actCategory(a)==="run"&&typeof a.km==="number"?a.km:0;}
 
 /* ---------- render ---------- */
@@ -564,7 +568,7 @@ function render(){
         h+=`<button class="notebtn" data-notekey="${act._key}" data-notelabel="${esc((act.atype||act.type||'Activity')+' · '+dispDate(iso))}">${un?'✎ Edit note':'✎ Add note'}</button>`;
         return h;
       };
-      const order=p=>({run:0,strength:1,ride:2,other:3})[chipCategory(p)];const slotO=p=>p.slot==="AM"?0:p.slot==="PM"?2:1;
+      const order=p=>({run:0,swim:1,strength:2,ride:3,other:4})[chipCategory(p)];const slotO=p=>p.slot==="AM"?0:p.slot==="PM"?2:1;
       const chips=planned.map((p,ai)=>({p,ai})).sort((x,y)=>(slotO(x.p)-slotO(y.p))||(order(x.p)-order(y.p))).map(({p,ai})=>{
         const cat2=chipCategory(p);
         const km=p.km!=null?`<span class="km">${p.km}k</span>`:(p.mins?`<span class="km">${p.mins}m</span>`:"");
@@ -574,9 +578,10 @@ function render(){
         if(cat2==="run")color=done?"c-green":(isPastDay?"c-red":"c-blue");
         else if(cat2==="strength")color=done?"c-green":"c-str";
         else if(cat2==="ride")color=done?"c-green":"c-ride";
+        else if(cat2==="swim")color=done?"c-green":"c-swim";
         const title=p.d?` title="${esc(p.d)}"`:"";
         if(!done)
-          return `<div class="chip ${color}" draggable="true" data-loc="${iso}|${ai}"${title}>${slot}<span>${p.a}</span>${km}</div>`;
+          return `<div class="chip ${color}${p.opt?" opt":""}" draggable="true" data-loc="${iso}|${ai}"${title}>${slot}<span>${p.a}</span>${km}</div>`;
         return `<div class="chip ${color} done-chip" draggable="true" data-loc="${iso}|${ai}"><div class="chiprow">${slot}<span>${p.a}</span>${km}<span class="tick">${CHECK}</span></div><div class="chipdetail">${detailHTML(act,p)}</div></div>`;
       }).join("");
       const extra=extraActs.map(act=>{
@@ -605,9 +610,9 @@ function render(){
   }
   out+=upWeeks.map(b=>b.html).join("");
   host.innerHTML=out;
-  let runs=0,rides=0,str=0,km=0;
-  PLAN.forEach(w=>isoSeq(w.start).forEach(iso=>dayActuals(iso).forEach(a=>{if(!a.done)return;const k=actCategory(a);if(k==="run"){runs++;km+=actRunKm(a);}else if(k==="ride")rides++;else if(k==="strength")str++;})));
-  $("#s-km").textContent=fmt(km)+" km";$("#s-runs").textContent=runs;$("#s-rides").textContent=rides;$("#s-str").textContent=str;
+  let runs=0,rides=0,str=0,swims=0,km=0;
+  PLAN.forEach(w=>isoSeq(w.start).forEach(iso=>dayActuals(iso).forEach(a=>{if(!a.done)return;const k=actCategory(a);if(k==="run"){runs++;km+=actRunKm(a);}else if(k==="ride")rides++;else if(k==="strength")str++;else if(k==="swim")swims++;})));
+  $("#s-km").textContent=fmt(km)+" km";$("#s-runs").textContent=runs;$("#s-rides").textContent=rides;$("#s-str").textContent=str;$("#s-swims").textContent=swims;
 }
 
 /* ---------- drag & drop ---------- */
@@ -704,7 +709,7 @@ function isoFromMs(ms){return isoOf(new Date(ms));}
 function planPayload(){
   const t=todayISO(), tm=mondayOf(t), out=[];
   PLAN.forEach((w,wi)=>{const isos=isoSeq(w.start);isos.forEach((iso,di)=>{
-    const sessions=plannedFor(wi,iso).map(p=>(p.slot?p.slot+" ":"")+p.a+(p.km!=null?` (${p.km}k)`:p.mins?` (${p.mins}min)`:"")+(p.d?` — ${p.d}`:""));
+    const sessions=plannedFor(wi,iso).map(p=>(p.slot?p.slot+" ":"")+p.a+(p.km!=null?` (${p.km}k)`:p.mins?` (${p.mins}min)`:"")+(p.opt?" (optional)":"")+(p.d?` — ${p.d}`:""));
     const e={date:iso,day:DNAMES[di],week:w.lab||("Week "+w.no),phase:w.phase,wk:Math.round((mondayOf(iso)-tm)/6.048e8),sessions};
     if(iso===t)e.today=true;
     out.push(e);
@@ -776,7 +781,7 @@ const BLOCK={
   athlete:{fiveK:"21:55 (Nov 2025, no speed work behind it)",marathon:"3:39:45 on 30 Aug 2026, negative split, HR 145 for 31 km then 170 for the last 11",ftpW:280,ftpNote:"Cairns-derived; untested since June; 270 would not surprise",massKg:"81.5 (manual weigh-in 3 Sep 2026; the earlier 85–90 was an estimate; no body-fat data yet)",vdotNow:45,vdotGoal:50,knee:"medial left knee / patellofemoral; flared in the marathon taper"},
   paces:{now:{easy:"5:35–6:10",long:"5:25–5:55",threshold:"4:38",fiveK:"4:24",reps400:"4:05",strides:"~3:45"},afterBenchmark:{easy:"5:25–6:00",threshold:"4:26",fiveK:"4:12",reps400:"3:55"},goal:{easy:"5:15–5:45",threshold:"4:15",fiveK:"4:00",reps400:"3:45"}},
   bikeZones:{recovery:"under 155 W",endurance:"180–205 W",sweetSpot:"245–260 W",threshold:"265–295 W (FTP test only)",vo2:"not in this block"},
-  structure:"Mon AM easy + strides (PM 4 km double in wks 7, 9, 10). Tue AM key run + PM Strength A (loaded). Wed AM recovery spin + PM easy run. Thu AM threshold + PM Strength B (control). Fri AM sweet-spot ride + optional PM easy run. Sat long run (parkrun in wks 7 and 12). Sun long ride (long run instead in wk 7; easy spin in wk 12).",
+  structure:"Mon AM easy + strides (PM 4 km double in wks 7, 9, 10). Tue AM key run + PM Strength A (loaded). Wed AM recovery spin + PM easy run. Thu AM threshold + PM Strength B (control). Fri AM sweet-spot ride + optional PM easy run. Sat long run (parkrun in wks 7 and 12). Sun long ride (long run instead in wk 7; easy spin in wk 12). Optional 20-min swim technique session before Tuesday and Thursday strength — untracked, never hard.",
   phases:"Rec (31 Aug–13 Sep) · Base wks 1–3 · Down wk 4 · Threshold wks 5–7 (benchmark wk 7) · Down wk 8 · VO2/peak wks 9–10 · Sharpen wk 11 · Race wk 12",
   volumeKm:{rec:[15,34],weeks:[40,46,52,48,60,66,68,58,76,74,58,36]},
   rules:[
@@ -788,7 +793,8 @@ const BLOCK={
     "Knee: hills fine (walk down), no long downhills; pain that changes gait ends the session; two painful sessions in a row → swap the run for a ride and get it looked at",
     "Deficit phase weeks 3–8 only (not during marathon recovery), 350–400 g/wk (0.5% of 81.5 kg), protein 130–180 g/day, maintenance from week 9; skip the deficit entirely if DEXA body fat is under ~12%",
     "Strength: bodyweight wks 1–2, build wks 3–8, maintain wks 9–12, never on Wed/Fri/Sat",
-    "Wednesday's easy run may be swapped for a ride when the ramp bites; Friday's run is always optional; Saturday and Tue/Thu are never substituted"
+    "Wednesday's easy run may be swapped for a ride when the ramp bites; Friday's run is always optional; Saturday and Tue/Thu are never substituted",
+    "Swimming is optional and not counted toward any target: 20 min of technique BEFORE the Tue/Thu gym session (stroke-rate 8×50 @ 32–34 spm, catch drills, or 12×25 fast). Never a hard aerobic swim — it must not cost the next morning's run. Target pace trajectory: 2:00/100 now → 1:50 by Dec → 1:40 after the sub-3 project"
   ]
 };
 let coachMsgs = [], coachPending = false;

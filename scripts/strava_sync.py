@@ -191,6 +191,8 @@ def main():
             sport = "ride"
         elif any(k in s for k in ("weight", "strength")):
             sport = "strength"
+        elif "swim" in s:
+            sport = "swim"
         elif any(k in s for k in ("workout", "crossfit", "hiit")):
             sport = "run" if km >= 0.5 else "strength"   # a "Workout" with distance is a running workout
         else:
@@ -233,6 +235,13 @@ def main():
             if w:   entry["watts"] = int(w)
             if npw: entry["np"] = int(npw)
             print(f"  {date}  Ride       {km:>5} km  {mins:>4} min" + (f"  NP {int(npw)} W" if npw else ""))
+        elif sport == "swim":
+            dist_m = a.get("distance") or 0
+            p100 = (a.get("moving_time", 0) / (dist_m / 100.0)) if dist_m else 0
+            pace = mmss(p100) if p100 else "-"
+            entry = {"km": km, "type": "Swim", "note": f"{int(dist_m)} m · {mins} min · {pace}/100m",
+                     "done": True, "sport": "swim", "mins": mins, "p100": int(round(p100))}
+            print(f"  {date}  Swim       {int(dist_m):>5} m   {pace}/100m")
         elif sport == "strength":
             entry = {"km": None, "type": "Strength", "note": f"{mins} min", "done": True, "sport": "strength"}
             print(f"  {date}  Strength   {mins:>4} min")
