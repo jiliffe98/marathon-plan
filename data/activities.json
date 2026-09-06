@@ -940,7 +940,29 @@
       "watts": 127,
       "np": 152,
       "id": "20053789188"
+    },
+    {
+      "km": 0.0,
+      "type": "Ride",
+      "note": "0.0 km \u00b7 0 min",
+      "done": true,
+      "sport": "ride",
+      "mins": 0,
+      "id": "20067308516"
     }
   ],
-  "_synced_at": "2026-09-06T20:59:23Z"
+  "2026-09-07": [
+    {
+      "km": 4.5,
+      "type": "Ride",
+      "note": "4.5 km \u00b7 15 min \u00b7 NP 146 W",
+      "done": true,
+      "sport": "ride",
+      "mins": 15,
+      "watts": 130,
+      "np": 146,
+      "id": "20067422848"
+    }
+  ],
+  "_synced_at": "2026-09-06T22:49:02Z"
 }
