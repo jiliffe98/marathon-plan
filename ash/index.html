@@ -235,7 +235,7 @@
 <div class="wrap"><div class="inner">
   <p class="eyebrow">Ash · Race day · Sat 5 Dec 2026 · parkrun</p>
   <h1>Sub-20 5k Block</h1>
-  <p class="sub">Block 1 of the sub-3 project — 12 weeks, 4–6 runs, 1–2 rides, 2 strength, building 24 → 48 km. Tap a day to log or note; drag a session to move it. <a href="https://claude.ai/code/artifact/d25aa429-abf2-49e9-9285-cc718a0b2581" target="_blank" rel="noopener">Full plan ↗</a> · <a href="../">Jeremiah's block →</a></p>
+  <p class="sub">Block 1 of the sub-3 project — 12 weeks, 5–6 runs, 1–2 rides, 2 strength, building 34 → 58 km. Tap a day to log or note; drag a session to move it. <a href="https://claude.ai/code/artifact/d25aa429-abf2-49e9-9285-cc718a0b2581" target="_blank" rel="noopener">Full plan ↗</a> · <a href="../">Jeremiah's block →</a></p>
 
   <div class="toolbar">
     <div class="stat">Run km <b id="s-km">0</b></div>
@@ -419,31 +419,31 @@ const EZS=(km,d)=>R("Easy + strides",km,"AM",d||"easy, then 6×20s relaxed fast"
 const DBL=R("Easy · double",4,"PM","4 km very easy · the second run of the day");
 
 const PLAN=[
-  {no:1,range:"14 – 20 Sep",tag:"Base · four runs · learn the week",start:"2026-09-14",phase:"base",total:24,long:8,days:[
-    [EZS(5)],[EZS(6,"easy, then 6×20s — no quality yet"),SW(),SA],[RIDE,EZ(5,"PM")],[SW(),SB2],[REST],[LR(8)],[LONGRIDE]]},
-  {no:2,range:"21 – 27 Sep",tag:"Base · hills begin · bodyweight strength",start:"2026-09-21",phase:"base",total:28,long:10,days:[
-    [EZS(5)],[R("Hills 6×30s",7,"AM","5–8% grade · 5k effort · WALK down · 2 km w/u + c/d"),SW(),SA],[RIDE,EZ(6,"PM")],[SW(),SB2],[REST],[LR(10)],[LONGRIDE]]},
-  {no:3,range:"28 Sep – 4 Oct",tag:"Base · first tempo · fifth run · add load",start:"2026-09-28",phase:"base",total:32,long:10,days:[
-    [EZS(4)],[R("Hills 8×30s",7,"AM","walk down · add load in the gym from this week"),SW(),SA],[RIDE,EZ(5,"PM")],[R("Tempo 10 min",6,"AM","@ 4:28 · comfortably hard"),SW(),SB2],[REST],[LR(10)],[LONGRIDE]]},
-  {no:4,range:"5 – 11 Oct",tag:"Down week",start:"2026-10-05",phase:"down",total:26,long:7,days:[
-    [EZS(4,"easy, then 8×20s")],[EZS(6,"easy, then 8×20s"),SW(),SA],[RIDE,EZ(4,"PM")],[R("Tempo 8 min",5,"AM","@ 4:28"),SW(),SB2],[REST],[LR(7)],[LONGRIDE]]},
-  {no:5,range:"12 – 18 Oct",tag:"Threshold · VO2 reps begin",start:"2026-10-12",phase:"thr",total:36,long:9,days:[
-    [EZS(6)],[R("Intervals 5×600",8,"AM","@ 4:07/km (2:28 per rep) · 2 min jog · last two match the first two"),SW(),SA],[RIDE,EZ(6,"PM")],[R("Threshold 2×8 min",7,"AM","@ 4:28 · 2 min jog"),SW(),SB2],[REST],[LR(9)],[LONGRIDE]]},
-  {no:6,range:"19 – 25 Oct",tag:"Threshold",start:"2026-10-19",phase:"thr",total:40,long:10,days:[
-    [EZS(6)],[R("Intervals 6×600",9,"AM","@ 4:07 · 90s jog"),SW(),SA],[RIDE,EZ(7,"PM")],[R("Threshold 3×6 min",8,"AM","@ threshold · 90s jog"),SW(),SB2],[REST],[LR(10)],[LONGRIDE]]},
-  {no:7,range:"26 Oct – 1 Nov",tag:"Benchmark week · PB attempt on 21:00",start:"2026-10-26",phase:"thr",total:42,long:null,days:[
-    [EZS(7)],[R("Intervals 4×800",8,"AM","@ 5k pace · 3 min jog · a sharpener before Saturday, not a full session"),SW(),SA],[RIDE,EZ(7,"PM")],[EZS(6),SW(),SB2],[REST],
-    [R("Benchmark · parkrun 5k",8,"AM","FULL EFFORT · 2 km w/u + 1.5 km c/d · PB attempt on 21:00 — every pace recalibrates from this")],[EZ(6,"AM","easy · no ride today")]]},
-  {no:8,range:"2 – 8 Nov",tag:"Down week · new paces from the benchmark",start:"2026-11-02",phase:"down",total:34,long:9,days:[
-    [EZS(6)],[R("Reps 8×400",7,"AM","@ new 5k pace · 90s jog"),SW(),SA],[RIDE,EZ(6,"PM")],[R("Tempo 12 min",6,"AM","@ new threshold"),SW(),SB2],[REST],[LR(9,"easy")],[LONGRIDE]]},
-  {no:9,range:"9 – 15 Nov",tag:"Peak · 48 km · Friday easy run begins",start:"2026-11-09",phase:"vo2",total:48,long:9,days:[
-    [EZS(8)],[R("Intervals 5×1k",10,"AM","@ 5k pace · 3 min jog"),SW(),SA],[RIDE,EZ(8,"PM")],[R("Cruise 4×1k",9,"AM","@ threshold · 60s jog · short recoveries are the point"),SW(),SB2],[EZ(4,"AM","short and easy")],[LR(9)],[LONGRIDE]]},
-  {no:10,range:"16 – 22 Nov",tag:"Peak · 46 km · maintain in the gym",start:"2026-11-16",phase:"vo2",total:46,long:9,days:[
-    [EZS(7)],[R("Reps 10×400",9,"AM","@ 400s pace (~3:55) · 90s jog"),SW(),SA],[RIDE,EZ(8,"PM")],[R("Tempo 15 min",9,"AM","continuous @ threshold"),SW(),SB2],[EZ(4,"AM")],[LR(9)],[LONGRIDE]]},
-  {no:11,range:"23 – 29 Nov",tag:"Sharpen",start:"2026-11-23",phase:"vo2",total:38,long:10,days:[
-    [EZS(6)],[R("Reps 8×400",8,"AM","@ 400s pace · 90s jog"),SW(),SA],[RIDE,EZ(6,"PM")],[R("Threshold 2×6 min",8,"AM","@ threshold"),SW(),SB2],[REST],[LR(10)],[LONGRIDE]]},
-  {no:12,range:"30 Nov – 6 Dec",tag:"Race week",start:"2026-11-30",phase:"race",total:26,long:null,days:[
-    [EZS(5,"easy, then 6×20s")],[R("Reps 6×400",6,"AM","@ GOAL pace 4:00/km (96s) · 90s jog · feel fast, stop fresh"),SW(),SA_L],[RIDE,EZ(4,"PM")],[EZS(4,"easy, then 4 strides")],[REST],
+  {no:1,range:"14 – 20 Sep",tag:"Base · five runs · learn the week",start:"2026-09-14",phase:"base",total:34,long:10,days:[
+    [EZS(6)],[EZS(7,"easy, then 6×20s — no quality yet"),SW(),SA],[RIDE,EZ(6,"PM")],[EZ(5,"AM","easy"),SW(),SB2],[REST],[LR(10)],[LONGRIDE]]},
+  {no:2,range:"21 – 27 Sep",tag:"Base · hills begin · bodyweight strength",start:"2026-09-21",phase:"base",total:38,long:11,days:[
+    [EZS(6)],[R("Hills 6×30s",8,"AM","5–8% grade · 5k effort · WALK down · 2 km w/u + c/d"),SW(),SA],[RIDE,EZ(7,"PM")],[EZS(6),SW(),SB2],[REST],[LR(11)],[LONGRIDE]]},
+  {no:3,range:"28 Sep – 4 Oct",tag:"Base · first tempo · add load",start:"2026-09-28",phase:"base",total:42,long:11,days:[
+    [EZS(7)],[R("Hills 8×30s",9,"AM","walk down · add load in the gym from this week"),SW(),SA],[RIDE,EZ(7,"PM")],[R("Tempo 12 min",8,"AM","@ 4:28 · comfortably hard"),SW(),SB2],[REST],[LR(11)],[LONGRIDE]]},
+  {no:4,range:"5 – 11 Oct",tag:"Down week",start:"2026-10-05",phase:"down",total:34,long:9,days:[
+    [EZS(6,"easy, then 8×20s")],[EZS(7,"easy, then 8×20s"),SW(),SA],[RIDE,EZ(6,"PM")],[R("Tempo 8 min",6,"AM","@ 4:28"),SW(),SB2],[REST],[LR(9)],[LONGRIDE]]},
+  {no:5,range:"12 – 18 Oct",tag:"Threshold · VO2 reps begin",start:"2026-10-12",phase:"thr",total:46,long:12,days:[
+    [EZS(7)],[R("Intervals 5×800",10,"AM","@ 4:07/km (3:18 per rep) · 2 min jog · last two match the first two"),SW(),SA],[RIDE,EZ(8,"PM")],[R("Threshold 2×8 min",9,"AM","@ 4:28 · 2 min jog"),SW(),SB2],[REST],[LR(12)],[LONGRIDE]]},
+  {no:6,range:"19 – 25 Oct",tag:"Threshold",start:"2026-10-19",phase:"thr",total:50,long:13,days:[
+    [EZS(8)],[R("Intervals 6×800",11,"AM","@ 4:07 · 90s jog"),SW(),SA],[RIDE,EZ(8,"PM")],[R("Threshold 3×6 min",10,"AM","@ threshold · 90s jog"),SW(),SB2],[REST],[LR(13)],[LONGRIDE]]},
+  {no:7,range:"26 Oct – 1 Nov",tag:"Benchmark week · PB attempt on 21:00",start:"2026-10-26",phase:"thr",total:48,long:null,days:[
+    [EZS(8)],[R("Intervals 4×800",9,"AM","@ 5k pace · 3 min jog · a sharpener before Saturday, not a full session"),SW(),SA],[RIDE,EZ(8,"PM")],[EZS(7),SW(),SB2],[REST],
+    [R("Benchmark · parkrun 5k",8,"AM","FULL EFFORT · 2 km w/u + 1.5 km c/d · PB attempt on 21:00 — every pace recalibrates from this")],[EZ(8,"AM","easy · no ride today")]]},
+  {no:8,range:"2 – 8 Nov",tag:"Down week · new paces from the benchmark",start:"2026-11-02",phase:"down",total:42,long:12,days:[
+    [EZS(7)],[R("Reps 8×400",8,"AM","@ new 5k pace · 90s jog"),SW(),SA],[RIDE,EZ(7,"PM")],[R("Tempo 12 min",8,"AM","@ new threshold"),SW(),SB2],[REST],[LR(12,"easy")],[LONGRIDE]]},
+  {no:9,range:"9 – 15 Nov",tag:"Peak · 58 km · Friday easy run begins",start:"2026-11-09",phase:"vo2",total:58,long:13,days:[
+    [EZS(9)],[R("Intervals 5×1k",12,"AM","@ 5k pace · 3 min jog"),SW(),SA],[RIDE,EZ(9,"PM")],[R("Cruise 4×1k",11,"AM","@ threshold · 60s jog · short recoveries are the point"),SW(),SB2],[EZ(4,"AM","short and easy")],[LR(13)],[LONGRIDE]]},
+  {no:10,range:"16 – 22 Nov",tag:"Peak · 56 km · maintain in the gym",start:"2026-11-16",phase:"vo2",total:56,long:12,days:[
+    [EZS(9)],[R("Reps 10×400",11,"AM","@ 400s pace (~3:52) · 90s jog"),SW(),SA],[RIDE,EZ(9,"PM")],[R("Tempo 15 min",11,"AM","continuous @ threshold"),SW(),SB2],[EZ(4,"AM")],[LR(12)],[LONGRIDE]]},
+  {no:11,range:"23 – 29 Nov",tag:"Sharpen",start:"2026-11-23",phase:"vo2",total:46,long:14,days:[
+    [EZS(7)],[R("Reps 8×400",9,"AM","@ 400s pace · 90s jog"),SW(),SA],[RIDE,EZ(7,"PM")],[R("Threshold 2×6 min",9,"AM","@ threshold"),SW(),SB2],[REST],[LR(14)],[LONGRIDE]]},
+  {no:12,range:"30 Nov – 6 Dec",tag:"Race week",start:"2026-11-30",phase:"race",total:28,long:null,days:[
+    [EZS(5,"easy, then 6×20s")],[R("Reps 6×400",7,"AM","@ GOAL pace 4:00/km (96s) · 90s jog · feel fast, stop fresh"),SW(),SA_L],[RIDE,EZ(5,"PM")],[EZS(4,"easy, then 4 strides")],[REST],
     [{a:"RACE · parkrun 5k",km:7,sport:"run",slot:"AM",d:"2 km w/u with 3 openers · race · 1 km c/d · go out at 4:00, NOT faster — you know why",race:true}],[EZSPIN]]},
 ];
 function defaultPlanned(c){return JSON.parse(JSON.stringify(c.days));}
@@ -763,18 +763,18 @@ const BLOCK={
   name:"Ash's Sub-20 5k Block — Block 1 of a multi-year sub-3 marathon project",
   athleteName:"Ash (Ashleigh)",
   goal:"5k under 20:00 (4:00/km) on Sat 5 Dec 2026 (parkrun). Central expectation 20:00–20:25 — sub-20 is genuinely in play (~coin flip); if missed, Block 2 in Feb–Jun 2027 finishes it.",
-  whyThisBlock:"Ash's PBs (5k 21:00, 10k 44:00) put her at VDOT 47, one minute from the goal. Her marathon (Melbourne 31 Aug 2025, 3:41:40 official) went through halfway in 1:39:53 — roughly right for VDOT 47 — and blew up at 32 km: a durability failure from 21 km/wk of running, not a pacing-ambition failure. She has averaged 21 km/wk running in 2026 (6 km/wk this month) while riding 200 h/yr. This block builds running volume 24→48 km/wk on frequency (4→6 runs), introduces speed work she has never done, and teaches pacing discipline.",
+  whyThisBlock:"Ash's PBs (5k 21:00, 10k 44:00) put her at VDOT 47, one minute from the goal. Her marathon (Melbourne 31 Aug 2025, 3:41:40 official) went through halfway in 1:39:53 — roughly right for VDOT 47 — and blew up at 32 km: a durability failure from 21 km/wk of running, not a pacing-ambition failure. She has averaged 21 km/wk running in 2026 (6 km/wk this month) while riding 200 h/yr. This block rebuilds running volume 34→58 km/wk on frequency (5→6 runs) — her legs already know 50 from two builds, introduces speed work she has never done, and teaches pacing discipline.",
   race:{date:RACE_ISO,name:"parkrun 5k"},
   benchmark:{date:BENCH_ISO,name:"parkrun 5k full effort — a PB attempt on 21:00; every pace recalibrates from this"},
-  athlete:{age:26,sex:"female",heightCm:168,massKg:61,marathon:"3:41:40 official (Melbourne 31 Aug 2025); half split 1:39:53; Strava best 42.2 km segment 3:32:03",fiveK:"21:00 PB (date to confirm)",tenK:"44:00 PB (date to confirm)",runVolume2026:"760 km in 108 runs to 6 Sep (~21 km/wk, avg 7 km/run)",bike2026:"4,764 km / 202 h — a strong cyclist",injuries:"none reported",runningSince:"2020, structured for the last 1–2 years",vdotNow:47,vdotGoal:50},
+  athlete:{age:26,sex:"female",heightCm:168,massKg:61,marathon:"3:41:40 official (Melbourne 31 Aug 2025); half split 1:39:53; Strava best 42.2 km segment 3:32:03",fiveK:"21:00 PB (date to confirm)",tenK:"44:00 PB (date to confirm)",runVolume2026:"760 km in 108 runs to 6 Sep (~21 km/wk average) — but 40–57 km/wk with 24–28 km long runs through the mid-2025 Brighton build, and 35–60 km/wk in May 2026; 6 km/wk in Aug (Ironman recovery + Bali holiday)",bike2026:"4,764 km / 202 h — a strong cyclist",injuries:"none reported, except a run titled \"Testing the foot\" in May 2026 — watch the foot",runningSince:"2020, structured for the last 1–2 years",vdotNow:47,vdotGoal:50},
   paces:{now:{easy:"5:25–5:55",long:"5:15–5:45",threshold:"4:28",fiveK:"4:12",reps400:"3:52",strides:"~3:40"},midBlock:{easy:"5:20–5:50",threshold:"4:21",fiveK:"4:06",reps400:"3:48"},goal:{easy:"5:15–5:45",threshold:"4:15",fiveK:"4:00",reps400:"3:45"}},
   bike:"No zones. Every ride is easy and conversational; no efforts. Wednesday ride 60–90 min; Sunday long ride 1.5–2.5 h is optional and the first thing to drop.",
   structure:"Mon AM easy + strides. Tue AM key run + PM Strength A (loaded). Wed AM easy ride + PM easy run. Thu AM threshold + PM Strength B (control). Fri rest (easy 4 km from wk 9). Sat long run 7–10 km (parkrun in wks 7 and 12). Sun optional long ride (easy run instead in wk 7; easy spin wk 12). Optional 20-min swim technique before Tue/Thu strength — untracked. Same weekly shape as her partner Jeremiah's block so easy runs and long runs can be shared (their easy paces are near-identical).",
   phases:"Base wks 1–3 · Down wk 4 · Threshold wks 5–7 (benchmark wk 7) · Down wk 8 · VO2/peak wks 9–10 · Sharpen wk 11 · Race wk 12",
-  volumeKm:{weeks:[24,28,32,26,36,40,42,34,48,46,38,26]},
+  volumeKm:{weeks:[34,38,42,34,46,50,48,42,58,56,46,28]},
   rules:[
-    "Add runs, never lengthen them: no single run over 10 km this block; volume comes from a 5th and 6th run",
-    "Any focal bone pain (shin, top of foot, hip, pubic bone) that does not warm up STOPS the block: physio, ride until cleared",
+    "Add runs, never lengthen them: no single run over 14 km this block; volume comes from a 6th run and slightly longer easy days",
+    "Any focal bone pain (shin, top of foot, hip, pubic bone) that does not warm up STOPS the block: physio, ride until cleared. She was testing a foot niggle in May 2026 — treat any recurrence as a stop signal",
     "Eat for the ramp: NO deficit, no race-weight talk; mass is not a lever at 61 kg and under-fuelling is how a female runner's volume ramp fails",
     "The bike stays easy; hard rides steal Thursday; Sunday's ride is optional and dropped first",
     "Hard days hard (Tue, Thu carry quality + strength), easy days easy",
