@@ -26,7 +26,7 @@ DAYS_BACK        = 21       # how far back to look each run
 # -----------------------------------------------------------------------------
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-OUT  = ROOT / "data" / "activities.json"
+OUT  = ROOT / (os.environ.get("OUT_PATH") or "data/activities.json")   # a second athlete sets OUT_PATH
 API  = "https://www.strava.com/api/v3"
 
 

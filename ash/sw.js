@@ -4,7 +4,7 @@
    there's a connection; the cached shell lets you read the plan with no signal.
    Cross-origin requests (Supabase, Edge Functions) bypass the SW entirely.
    The archived marathon app under /marathon/ has its own worker and cache. */
-const CACHE = "block1-v1";
+const CACHE = "ash-block1-v1";
 const SHELL = [
   "./",
   "index.html",
@@ -58,6 +58,6 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
   // leave the archived app to its own worker
-  if (url.pathname.includes("/marathon/") || url.pathname.includes("/ash/")) return;
+  if (url.pathname.includes("/marathon/")) return;
   e.respondWith(networkFirst(req));
 });

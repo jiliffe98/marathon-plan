@@ -1,0 +1,4 @@
+{
+  "_synced_at": null,
+  "_note": "Waiting for Ash to authorise Strava. Once ASH_STRAVA_REFRESH_TOKEN is set as a repo secret, the sync-ash job fills this hourly."
+}

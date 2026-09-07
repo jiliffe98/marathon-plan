@@ -6,6 +6,7 @@ Two apps in one repo, sharing one Strava sync and one Supabase project.
 |---|---|---|
 | `/` | **Sub-20 5k Block** — Sep–Dec 2026, the current training block | `jeremiah-block1` |
 | `/marathon/` | **Sydney Marathon 2026 — record** — the completed block, frozen at 31 Aug | `jeremiah` |
+| `/ash/` | **Ash's Sub-20 5k Block** — Sep–Dec 2026, Ash's parallel block (own Strava sync once her token is set) | `ash-block1` |
 
 ```
  watch ──▶ Strava ──▶ GitHub Action (hourly) ──▶ data/activities.json ──▶ /  (block app)
@@ -27,6 +28,12 @@ Two apps in one repo, sharing one Strava sync and one Supabase project.
 | `supabase/functions/coach` | Claude coach. Block-agnostic — the client sends `context.block` (goal, paces, zones, rules) |
 | `supabase/functions/resync` | "↻ Resync Strava" button → dispatches the sync workflow (`GITHUB_TOKEN` secret, Actions:write on this repo only) |
 | `supabase_schema.sql` | the one table: `training_state(id text pk, data jsonb)` |
+
+## Connecting Ash's Strava (one-time, needs Ash)
+
+1. Ash opens (replace CLIENT_ID with the existing app's id): `https://www.strava.com/oauth/authorize?client_id=CLIENT_ID&response_type=code&redirect_uri=http://localhost&approval_prompt=force&scope=activity:read_all` while logged into **her** Strava, clicks Authorize, and copies the `code=` value from the address bar of the page that fails to load.
+2. Exchange it: `curl -X POST https://www.strava.com/oauth/token -d client_id=CLIENT_ID -d client_secret=CLIENT_SECRET -d code=CODE -d grant_type=authorization_code` → copy `refresh_token`.
+3. Repo → Settings → Secrets → Actions → new secret **`ASH_STRAVA_REFRESH_TOKEN`**. The `sync-ash` job starts filling `ash/data/activities.json` on the next hourly run.
 
 ## Starting the next block (when this one is done)
 

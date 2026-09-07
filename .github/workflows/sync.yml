@@ -53,3 +53,41 @@ jobs:
             git commit -m "chore: strava sync $(date -u +%Y-%m-%d)"
             git push
           fi
+
+  # Ash's block app (/ash/). Same Strava API app, her own refresh token.
+  # Does nothing until ASH_STRAVA_REFRESH_TOKEN is set as a repository secret.
+  sync-ash:
+    needs: sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Pull Ash's Strava activities
+        env:
+          STRAVA_CLIENT_ID: ${{ secrets.STRAVA_CLIENT_ID }}
+          STRAVA_CLIENT_SECRET: ${{ secrets.STRAVA_CLIENT_SECRET }}
+          STRAVA_REFRESH_TOKEN: ${{ secrets.ASH_STRAVA_REFRESH_TOKEN }}
+          DAYS_BACK_OVERRIDE: ${{ github.event.inputs.days_back }}
+          OUT_PATH: ash/data/activities.json
+        run: |
+          if [ -z "$STRAVA_REFRESH_TOKEN" ]; then
+            echo "ASH_STRAVA_REFRESH_TOKEN not set yet - skipping Ash's sync."
+            exit 0
+          fi
+          python scripts/strava_sync.py
+      - name: Commit Ash's data
+        run: |
+          git config user.name  "strava-bot"
+          git config user.email "actions@github.com"
+          git add ash/data/activities.json
+          if git diff --staged --quiet; then
+            echo "No changes."
+          else
+            git commit -m "chore: strava sync (ash) $(date -u +%Y-%m-%d)"
+            git pull --rebase origin main
+            git push
+          fi
