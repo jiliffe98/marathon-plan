@@ -502,7 +502,7 @@ function weekLong(isos){let m=0;isos.forEach(iso=>dayActuals(iso).forEach(a=>{m=
 function weekCounts(wi,isos){
   const c={run:{p:0,d:0},ride:{p:0,d:0},strength:{p:0,d:0}};
   isos.forEach(iso=>{
-    plannedFor(wi,iso).forEach(p=>{const k=chipCategory(p);if(c[k])c[k].p++;});
+    plannedFor(wi,iso).forEach(p=>{if(p.opt)return;const k=chipCategory(p);if(c[k])c[k].p++;});
     dayActuals(iso).forEach(a=>{if(!a.done)return;const k=actCategory(a);if(c[k])c[k].d++;});
   });
   return c;
