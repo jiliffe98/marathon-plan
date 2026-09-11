@@ -1021,7 +1021,18 @@
       "sport": "run",
       "mins": 21,
       "id": "20122758890"
+    },
+    {
+      "km": 10.7,
+      "type": "Ride",
+      "note": "10.7 km \u00b7 26 min \u00b7 NP 171 W",
+      "done": true,
+      "sport": "ride",
+      "mins": 26,
+      "watts": 154,
+      "np": 171,
+      "id": "20126690816"
     }
   ],
-  "_synced_at": "2026-09-11T05:31:09Z"
+  "_synced_at": "2026-09-11T10:24:29Z"
 }
